@@ -1,0 +1,10 @@
+{
+  "name": "sdweb-welding",
+  "private": true,
+  "description": "激光焊接结构化数据抽取与质量评估系统（monorepo）",
+  "scripts": {
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "dev:backend": "bash scripts/dev-backend.sh"
+  }
+}

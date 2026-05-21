@@ -1,0 +1,70 @@
+{
+  "document_id": "LW_LP_PARAM_BANK_003",
+  "entities": [
+    {"text": "thin aluminum alloy sheet", "type": "Material", "start": 29, "end": 54},
+    {"text": "laser power", "type": "ProcessParameter", "start": 80, "end": 91},
+    {"text": "2.8 kW", "type": "ProcessParameter", "start": 95, "end": 101},
+    {"text": "welding speed", "type": "ProcessParameter", "start": 103, "end": 116},
+    {"text": "1.2 m/min", "type": "ProcessParameter", "start": 120, "end": 129},
+    {"text": "shielding gas Ar", "type": "ProcessParameter", "start": 131, "end": 147},
+    {"text": "porosity", "type": "Defect", "start": 153, "end": 161},
+    {"text": "weld bead", "type": "WeldZone", "start": 191, "end": 200},
+    {"text": "304 stainless steel", "type": "Material", "start": 203, "end": 222},
+    {"text": "3.0 kW", "type": "ProcessParameter", "start": 264, "end": 270},
+    {"text": "undercut", "type": "Defect", "start": 333, "end": 341},
+    {"text": "6061-T6", "type": "Material", "start": 344, "end": 351},
+    {"text": "ER4043", "type": "Material", "start": 374, "end": 380},
+    {"text": "2.5 kW", "type": "ProcessParameter", "start": 396, "end": 402},
+    {"text": "spatter", "type": "Defect", "start": 404, "end": 411}
+  ],
+  "relations": [
+    {
+      "type": "process_parameter",
+      "source": "2.8 kW",
+      "sourceType": "ProcessParameter",
+      "target": "laser power",
+      "targetType": "ProcessParameter",
+      "evidence": "a set laser power of 2.8 kW"
+    },
+    {
+      "type": "defect",
+      "source": "porosity",
+      "sourceType": "Defect",
+      "target": "weld bead",
+      "targetType": "WeldZone",
+      "evidence": "porosity defects were observed in the weld bead"
+    },
+    {
+      "type": "process_parameter",
+      "source": "3.0 kW",
+      "sourceType": "ProcessParameter",
+      "target": "304 stainless steel",
+      "targetType": "Material",
+      "evidence": "the process card specifies 3.0 kW power"
+    },
+    {
+      "type": "defect",
+      "source": "undercut",
+      "sourceType": "Defect",
+      "target": "304 stainless steel",
+      "targetType": "Material",
+      "evidence": "measured weld width was insufficient with accompanying undercut"
+    },
+    {
+      "type": "material",
+      "source": "ER4043",
+      "sourceType": "Material",
+      "target": "6061-T6",
+      "targetType": "Material",
+      "evidence": "6061-T6 sheet PA welding with ER4043 filler wire"
+    },
+    {
+      "type": "defect",
+      "source": "spatter",
+      "sourceType": "Defect",
+      "target": "6061-T6",
+      "targetType": "Material",
+      "evidence": "spatter anomaly was not annotated in the gold standard"
+    }
+  ]
+}

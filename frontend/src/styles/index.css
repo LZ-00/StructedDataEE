@@ -1,0 +1,122 @@
+/* 全局样式 - 科技感学术风格 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* 主色调：学术风格配色（参考顶刊顶会） */
+  --primary-color: #6BAED6;        /* 浅蓝色 - 与图表配色一致 */
+  --primary-dark: #2C3E50;         /* 深灰蓝 - 用于标题和重要文字 */
+  --primary-light: #8FC4E0;        /* 更浅的蓝色 */
+  --secondary-color: #FC8D62;      /* 浅橙色 - 与图表配色一致 */
+  --secondary-light: #FEB896;      /* 更浅的橙色 */
+  --success-color: #67C23A;
+  --warning-color: #E6A23C;
+  --danger-color: #F56C6C;
+  --info-color: #909399;
+  
+  /* 背景色 - 学术风格 */
+  --bg-primary: #FFFFFF;            /* 纯白背景 */
+  --bg-secondary: #F8F9FA;         /* 浅灰背景 */
+  --bg-tertiary: #F5F7FA;          /* 更浅的灰背景 */
+  --bg-dark: #2C3E50;
+  --bg-card: #FFFFFF;
+  
+  /* 文字颜色 - 学术风格 */
+  --text-primary: #2C3E50;         /* 深灰蓝 - 主要文字 */
+  --text-regular: #606266;         /* 中等灰色 */
+  --text-secondary: #909399;       /* 次要文字 */
+  --text-placeholder: #C0C4CC;     /* 占位符文字 */
+  
+  /* 边框颜色 */
+  --border-base: #E5E5E5;          /* 淡灰色 - 与图表网格一致 */
+  --border-light: #E4E7ED;
+  --border-lighter: #EBEEF5;
+  --border-extra-light: #F2F6FC;
+  
+  /* 阴影 - 学术风格（更柔和） */
+  --shadow-base: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-light: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-dark: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.08);
+
+  /* 四界面统一字号（论文插图可读性，在上一版基础上再放大一档） */
+  --el-font-size-extra-large: 24px;
+  --el-font-size-large: 22px;
+  --el-font-size-medium: 20px;
+  --el-font-size-base: 18px;
+  --el-font-size-small: 16px;
+  --el-font-size-extra-small: 15px;
+  --el-font-line-height-primary: 28px;
+
+  /* 语义别名，便于各页复用 */
+  --ui-font-page-title: var(--el-font-size-extra-large);
+  --ui-font-section: var(--el-font-size-large);
+  --ui-font-card-title: var(--el-font-size-medium);
+  --ui-font-body: var(--el-font-size-base);
+  --ui-font-caption: var(--el-font-size-small);
+  --ui-font-code: 17px;
+  --ui-font-log: 16px;
+  --ui-font-stat-value: 36px;
+}
+
+body {
+  font-family: 'Arial', 'Helvetica Neue', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Noto Sans', sans-serif;
+  font-size: var(--el-font-size-base);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+/* 卡片样式 */
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: var(--shadow-base);
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-lighter);
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-light);
+  transform: translateY(-2px);
+}
+
+/* 图表容器 */
+.chart-container {
+  width: 100%;
+  height: 100%;
+  min-height: 400px;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+  .app-main {
+    padding: 16px !important;
+  }
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-base);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}

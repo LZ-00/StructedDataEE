@@ -1,0 +1,5 @@
+Laser wire-filled welding of thin aluminum alloy sheet was performed with a set laser power of 2.8 kW, welding speed of 1.2 m/min, shielding gas Ar, and porosity defects were observed in the weld bead.
+
+304 stainless steel butt welding: the process card specifies 3.0 kW power; measured weld width was insufficient with accompanying undercut.
+
+6061-T6 sheet PA welding with ER4043 filler wire at 2.5 kW; spatter anomaly was not annotated in the gold standard.

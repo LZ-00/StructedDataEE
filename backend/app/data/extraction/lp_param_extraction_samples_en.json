@@ -1,0 +1,15 @@
+{
+  "source_csv": "lp_param_bank.csv",
+  "passages_en": [
+    "Laser wire-filled welding of thin aluminum alloy sheet was performed with a set laser power of 2.8 kW, welding speed of 1.2 m/min, shielding gas Ar, and porosity defects were observed in the weld bead.",
+    "304 stainless steel butt welding: the process card specifies 3.0 kW power; measured weld width was insufficient with accompanying undercut.",
+    "6061-T6 sheet PA welding with ER4043 filler wire at 2.5 kW; spatter anomaly was not annotated in the gold standard.",
+    "Duplex stainless steel laser welding: elevated heat input caused coarse grain growth; the gold standard only records lack-of-fusion risk.",
+    "Titanium alloy seal welding: power window 1.8–2.2 kW, current setpoint 2.0 kW, surface oxidation color normal.",
+    "Galvanized steel laser brazing at 1.6 kW laser power; weld formation was good with no defects detected.",
+    "Nickel-based superalloy cladding with He shielding gas; excessive interpass temperature caused crack susceptibility.",
+    "Cu-Al dissimilar metal laser welding at 4.2 kW; brittle intermetallic at the interface caused delamination.",
+    "High-strength steel laser keyhole welding at 5.0 kW with CO2 shielding gas; spatter and porosity coexisted.",
+    "Magnesium alloy laser welding at 1.2 kW; inadequate oxide removal led to lack of fusion."
+  ]
+}
