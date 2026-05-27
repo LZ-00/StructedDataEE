@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+from app.timezone_utils import ASIA_SHANGHAI
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "finetune"
 # 软著 Web 微调权重目录（DSE finetuning_output 下独立子目录）
@@ -71,7 +73,7 @@ def describe_finetune_dataset() -> dict[str, Any]:
             "filename": path.name,
             "source": "distillation_saved",
             "sample_count": _count_jsonl_lines(path),
-            "modified_at": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat(),
+            "modified_at": datetime.fromtimestamp(mtime, tz=ASIA_SHANGHAI).isoformat(),
             "candidate_count": len(candidates),
         }
 
@@ -82,7 +84,7 @@ def describe_finetune_dataset() -> dict[str, Any]:
             "filename": BUNDLED_DATASET.name,
             "source": "bundled",
             "sample_count": _count_jsonl_lines(BUNDLED_DATASET),
-            "modified_at": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat(),
+            "modified_at": datetime.fromtimestamp(mtime, tz=ASIA_SHANGHAI).isoformat(),
             "candidate_count": 0,
         }
 
@@ -95,7 +97,7 @@ def describe_finetune_dataset() -> dict[str, Any]:
                 "filename": dse_path.name,
                 "source": "dse",
                 "sample_count": _count_jsonl_lines(dse_path),
-                "modified_at": datetime.fromtimestamp(mtime, tz=timezone.utc).isoformat(),
+                "modified_at": datetime.fromtimestamp(mtime, tz=ASIA_SHANGHAI).isoformat(),
                 "candidate_count": 0,
             }
 

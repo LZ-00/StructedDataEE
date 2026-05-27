@@ -24,25 +24,41 @@
               </el-select>
             </el-form-item>
             
-            <el-form-item label="评估基准">
-              <el-select
-                v-model="evaluationConfig.groundTruth"
-                placeholder="请选择评估基准数据集"
-                style="width: 100%"
+            <el-form-item label="评估文件">
+              <el-upload
+                ref="uploadRef"
+                class="eval-upload"
+                :auto-upload="false"
+                :limit="1"
+                :show-file-list="true"
+                accept=".json,application/json"
+                :on-change="handleFileChange"
+                :on-remove="handleFileRemove"
+                :on-exceed="handleFileExceed"
               >
-                <el-option
-                  v-for="gt in groundTruthOptions"
-                  :key="gt.value"
-                  :label="gt.label"
-                  :value="gt.value"
-                />
-              </el-select>
+                <el-button style="width: 100%">上传结构化抽取 JSON</el-button>
+              </el-upload>
+              <div class="upload-tip">
+                文件需包含 `experimental_records[].source.chunk`
+              </div>
             </el-form-item>
             
             <el-form-item>
               <el-button type="primary" @click="handleStartEvaluation" :loading="evaluating" style="width: 100%">
                 <el-icon><VideoPlay /></el-icon>
                 开始评估
+              </el-button>
+            </el-form-item>
+            <el-form-item>
+              <el-button
+                type="danger"
+                plain
+                @click="handleAbortEvaluation"
+                :disabled="!evaluating"
+                style="width: 100%"
+              >
+                <el-icon><Close /></el-icon>
+                中止评估
               </el-button>
             </el-form-item>
             <el-form-item>
@@ -62,22 +78,22 @@
           
           <div class="steps-container">
             <el-steps :active="currentStep" finish-status="success" direction="vertical">
-              <el-step title="解析 (Alignment)" :description="stepDescriptions[0]">
+              <el-step :title="evalSteps[0]?.title || 'Step 1 解析字段'" :description="stepDescriptions[0]">
                 <template #icon>
                   <el-icon><Search /></el-icon>
                 </template>
               </el-step>
-              <el-step title="验证 (Verification)" :description="stepDescriptions[1]">
+              <el-step :title="evalSteps[1]?.title || 'Step 2 证据核验'" :description="stepDescriptions[1]">
                 <template #icon>
                   <el-icon><CircleCheck /></el-icon>
                 </template>
               </el-step>
-              <el-step title="诊断 (Diagnosis)" :description="stepDescriptions[2]">
+              <el-step :title="evalSteps[2]?.title || 'Step 3 关系诊断'" :description="stepDescriptions[2]">
                 <template #icon>
                   <el-icon><Document /></el-icon>
                 </template>
               </el-step>
-              <el-step title="统合 (Reconciliation)" :description="stepDescriptions[3]">
+              <el-step :title="evalSteps[3]?.title || 'Step 4 评分统合'" :description="stepDescriptions[3]">
                 <template #icon>
                   <el-icon><Finished /></el-icon>
                 </template>
@@ -120,8 +136,8 @@
                 <span v-if="line.time" class="log-time">[{{ line.time }}]</span>
                 {{ line.message }}
               </div>
-              <div v-if="cotStreamText" class="cot-stream-block">
-                <div class="cot-stream-label">CoT 推理输出</div>
+              <div v-if="evaluating && cotStreamText" class="cot-stream-block">
+                <div class="cot-stream-label">CoT 推理输出（实时）</div>
                 <pre class="cot-stream-text">{{ cotStreamText }}</pre>
               </div>
               <div v-if="evaluating" class="log-line log-cursor">_</div>
@@ -150,25 +166,30 @@
           <div class="result-content" v-if="evaluationResult">
             <div class="result-summary">
               <div class="summary-title">整体评估结果</div>
-              <div class="summary-desc" v-if="evaluationResult.totalSamples">
-                基准集 {{ evaluationResult.totalSamples }} 条 ·
-                成功 {{ evaluationResult.successfulSamples ?? evaluationResult.totalSamples }} 条
+              <div class="summary-desc" v-if="evaluationResult.summary.totalRecords">
+                总记录 {{ evaluationResult.summary.totalRecords }} 条 ·
+                成功 {{ evaluationResult.summary.successfulRecords }} 条 ·
+                失败 {{ evaluationResult.summary.failedRecords }} 条
               </div>
             </div>
 
             <div class="metrics-list">
-              <div class="metric-item">
-                <div class="metric-label">RMSE</div>
-                <div class="metric-value" :class="getRMSEClass(evaluationResult.rmse)">
-                  {{ evaluationResult.rmse.toFixed(4) }}
+              <div v-for="record in evaluationResult.records" :key="`${record.recordId}-${record.index}`" class="metric-item">
+                <div class="metric-label">
+                  {{ record.recordId }} · {{ record.chunkId }} · {{ record.status === 'success' ? '成功' : '失败' }}
                 </div>
-              </div>
-
-              <div class="metric-item">
-                <div class="metric-label">精确匹配率</div>
-                <div class="metric-value">
-                  {{ (evaluationResult.exactMatch * 100).toFixed(2) }}%
+                <div class="metric-value record-preview">{{ record.preview || '-' }}</div>
+                <div v-if="record.score" class="metric-score">
+                  评估计数：{{ record.score.correctly_predicted_relations }}/{{ record.score.total_predicted_relations }}
                 </div>
+                <el-collapse class="record-collapse">
+                  <el-collapse-item :name="`${record.recordId}-${record.index}`">
+                    <template #title>
+                      CoT 推理输出
+                    </template>
+                    <pre class="record-analysis">{{ record.analysis || '无推理输出' }}</pre>
+                  </el-collapse-item>
+                </el-collapse>
               </div>
             </div>
           </div>
@@ -186,6 +207,7 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import type { UploadInstance, UploadRawFile } from 'element-plus'
 import {
   Setting,
   VideoPlay,
@@ -196,6 +218,7 @@ import {
   Finished,
   Delete,
   Download,
+  Close,
   Trophy,
   Loading
 } from '@element-plus/icons-vue'
@@ -208,12 +231,11 @@ import {
 import type { SelectOption } from '@/types/api'
 
 const evaluationModels = ref<SelectOption[]>([])
-const groundTruthOptions = ref<SelectOption[]>([])
 
 // 评估配置
 const evaluationConfig = ref({
   model: '',
-  groundTruth: ''
+  file: null as File | null
 })
 
 // 评估状态
@@ -222,13 +244,14 @@ const currentStep = ref(-1)
 const evalSteps = ref<EvaluationStepState[]>([])
 const runtimeLogs = ref<EvaluationLogLine[]>([])
 const cotStreamText = ref('')
+const cotCollapseActive = ref<string[]>(['realtime-cot'])
 const evaluationResult = ref<EvaluationResult | null>(null)
 const logContainerRef = ref<HTMLDivElement>()
+const uploadRef = ref<UploadInstance>()
 const evalAbortController = ref<AbortController | null>(null)
 
 const stepDescriptions = ref<string[]>([])
 const exampleCotLog = ref('')
-const defaultGroundTruth = ref('')
 
 const mapStepStatus = (status: string): EvaluationStepState['status'] => {
   if (status === 'process') return 'process'
@@ -237,19 +260,17 @@ const mapStepStatus = (status: string): EvaluationStepState['status'] => {
   return 'wait'
 }
 
+const formatNowTime = () => {
+  const now = new Date()
+  return now.toLocaleTimeString('zh-CN', { hour12: false, timeZone: 'Asia/Shanghai' })
+}
+
 onMounted(async () => {
   try {
     const options = await evaluationService.getOptions()
     evaluationModels.value = options.models
-    groundTruthOptions.value = options.ground_truths
     stepDescriptions.value = options.step_descriptions
     exampleCotLog.value = options.example_cot_log
-    defaultGroundTruth.value =
-      options.default_ground_truth ||
-      (options.ground_truths.length === 1 ? options.ground_truths[0].value : '')
-    if (defaultGroundTruth.value) {
-      evaluationConfig.value.groundTruth = defaultGroundTruth.value
-    }
   } catch {
     ElMessage.warning('评估配置加载失败，请确认已登录且后端服务已启动')
   }
@@ -257,8 +278,8 @@ onMounted(async () => {
 
 // 开始评估（SSE 流式）
 const handleStartEvaluation = async () => {
-  if (!evaluationConfig.value.model || !evaluationConfig.value.groundTruth) {
-    ElMessage.warning('请先选择模型和评估基准')
+  if (!evaluationConfig.value.model || !evaluationConfig.value.file) {
+    ElMessage.warning('请先选择模型并上传结构化抽取 JSON')
     return
   }
 
@@ -266,8 +287,14 @@ const handleStartEvaluation = async () => {
   currentStep.value = 0
   runtimeLogs.value = []
   cotStreamText.value = ''
+  cotCollapseActive.value = ['realtime-cot']
   evaluationResult.value = null
   evalSteps.value = []
+  runtimeLogs.value.push({
+    time: formatNowTime(),
+    level: 'INFO',
+    message: `当前评估文件：${evaluationConfig.value.file.name}`
+  })
 
   evalAbortController.value?.abort()
   const controller = new AbortController()
@@ -289,7 +316,11 @@ const handleStartEvaluation = async () => {
           if (evalSteps.value[index]) {
             evalSteps.value[index].status = mapStepStatus(status)
           }
-          currentStep.value = Math.min(3, index)
+          if (index === 3 && status === 'finish') {
+            currentStep.value = 4
+          } else {
+            currentStep.value = Math.min(3, index)
+          }
         },
         onLog: (line) => {
           runtimeLogs.value.push(line)
@@ -306,6 +337,9 @@ const handleStartEvaluation = async () => {
         onCotEnd: () => {
           scrollToBottom()
         },
+        onSampleResult: () => {
+          scrollToBottom()
+        },
         onDone: (evaluation) => {
           evaluationResult.value = evaluation
           currentStep.value = 4
@@ -315,6 +349,12 @@ const handleStartEvaluation = async () => {
         },
         onCancelled: (msg) => {
           ElMessage.warning(msg)
+          runtimeLogs.value.push({
+            time: formatNowTime(),
+            level: 'WARN',
+            message: msg
+          })
+          scrollToBottom()
         },
         onError: (msg) => {
           ElMessage.error(msg)
@@ -328,7 +368,14 @@ const handleStartEvaluation = async () => {
     }
   } catch (e) {
     if ((e as Error).name !== 'AbortError') {
-      ElMessage.error('评估失败，请确认后端服务已启动并已登录')
+      const msg = (e as Error).message?.trim() || '评估失败，请确认后端服务已启动并已登录'
+      ElMessage.error(msg)
+      runtimeLogs.value.push({
+        time: formatNowTime(),
+        level: 'ERROR',
+        message: msg
+      })
+      await scrollToBottom()
     }
   } finally {
     evaluating.value = false
@@ -345,45 +392,33 @@ const scrollToBottom = async () => {
   }
 }
 
-// 获取步骤标题
-const getStepTitle = (step: number) => {
-  const titles = [
-    '解析阶段：正在对齐抽取结果与标准答案',
-    '验证阶段：正在验证实体和关系的正确性',
-    '诊断阶段：正在分析错误原因',
-    '统合阶段：正在生成最终评估报告'
-  ]
-  return titles[step] || ''
+const handleFileChange = (uploadFile: { raw?: File | null }) => {
+  evaluationConfig.value.file = uploadFile.raw || null
 }
 
-// 获取步骤类型
-const getStepType = (step: number) => {
-  const types = ['info', 'info', 'warning', 'success']
-  return types[step] || 'info'
+const handleFileRemove = () => {
+  evaluationConfig.value.file = null
 }
 
-// 获取步骤描述
-const getStepDescription = (step: number) => {
-  return stepDescriptions.value[step] || ''
+const handleFileExceed = (files: UploadRawFile[]) => {
+  const latest = files[files.length - 1]
+  if (!latest) return
+  uploadRef.value?.clearFiles()
+  latest.uid = Date.now()
+  uploadRef.value?.handleStart(latest)
+  evaluationConfig.value.file = latest
+  ElMessage.info('已替换为最新选择的评估文件')
 }
 
-// 获取日志标签类型
-const getLogTagType = (type: string) => {
-  const typeMap: Record<string, string> = {
-    INFO: 'info',
-    SUCCESS: 'success',
-    WARNING: 'warning',
-    ERROR: 'danger'
-  }
-  return typeMap[type] || 'info'
-}
-
-// 获取 RMSE 样式类
-const getRMSEClass = (rmse: number) => {
-  if (rmse < 0.2) return 'excellent'
-  if (rmse < 0.3) return 'good'
-  if (rmse < 0.4) return 'fair'
-  return 'poor'
+const handleAbortEvaluation = () => {
+  if (!evaluating.value) return
+  evalAbortController.value?.abort()
+  runtimeLogs.value.push({
+    time: formatNowTime(),
+    level: 'WARN',
+    message: '用户已请求中止评估，正在停止模型推理...'
+  })
+  ElMessage.warning('已发送中止请求')
 }
 
 // 重置
@@ -392,12 +427,14 @@ const handleReset = () => {
   currentStep.value = -1
   runtimeLogs.value = []
   cotStreamText.value = ''
+  cotCollapseActive.value = ['realtime-cot']
   evalSteps.value = []
   evaluationResult.value = null
   evaluationConfig.value = {
     model: '',
-    groundTruth: defaultGroundTruth.value
+    file: null
   }
+  uploadRef.value?.clearFiles()
 }
 
 // 清空日志
@@ -503,6 +540,12 @@ const handleExportLogs = () => {
   color: #555;
   font-size: var(--ui-font-caption);
   font-weight: 500;
+}
+
+.upload-tip {
+  margin-top: 6px;
+  color: #7f8c8d;
+  font-size: var(--el-font-size-extra-small);
 }
 
 .steps-container {
@@ -742,6 +785,31 @@ const handleExportLogs = () => {
 .metric-value {
   font-size: var(--el-font-size-medium);
   font-weight: 600;
+  color: #2c3e50;
+}
+
+.record-preview {
+  font-size: var(--el-font-size-extra-small);
+  font-weight: 500;
+}
+
+.metric-score {
+  margin-top: 6px;
+  color: #5a7ba7;
+  font-size: var(--el-font-size-extra-small);
+}
+
+.record-collapse {
+  margin-top: 8px;
+  text-align: left;
+}
+
+.record-analysis {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: var(--ui-font-log);
+  line-height: 1.6;
   color: #2c3e50;
 }
 

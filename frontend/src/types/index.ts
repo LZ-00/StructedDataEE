@@ -90,3 +90,32 @@ export interface PipelineDefaults {
   embedding_model: string
   embedding_cache_dir: string
 }
+
+export interface EvaluationConfig {
+  model: string
+  file: File | null
+}
+
+export interface EvaluationScore {
+  correctly_predicted_relations: number
+  total_predicted_relations: number
+}
+
+export interface EvaluationRecordResult {
+  index: number
+  recordId: string
+  chunkId: string
+  preview: string
+  status: 'success' | 'failed'
+  analysis: string
+  score: EvaluationScore | null
+}
+
+export interface EvaluationResult {
+  summary: {
+    totalRecords: number
+    successfulRecords: number
+    failedRecords: number
+  }
+  records: EvaluationRecordResult[]
+}

@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
 from pathlib import Path
+
+from app.timezone_utils import slug_now_asia_shanghai
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "distillation"
 OUTPUT_DIR = _DATA_DIR / "generated"
@@ -53,8 +54,8 @@ def dataset_csv_path(dataset_id: str) -> Path:
 
 
 def generation_timestamp_slug() -> str:
-    """单次生成/保存任务的时间戳后缀（UTC）。"""
-    return datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    """单次生成/保存任务的时间戳后缀（Asia/Shanghai）。"""
+    return slug_now_asia_shanghai()
 
 
 def cot_output_jsonl(

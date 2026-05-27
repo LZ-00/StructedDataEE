@@ -6,13 +6,13 @@ import json
 import queue
 import threading
 from collections.abc import Iterator
-from datetime import datetime, timezone
 from typing import Any, Callable
 
 from app.config import distillation_catalog as distill_cfg
 from app.services import cot_generation_service
 from app.services.cot_generation_service import GenerationCancelled, load_csv_rows
 from app.services.distillation_service import _default_instruction
+from app.timezone_utils import time_now_asia_shanghai
 
 EmitFn = Callable[[dict[str, Any]], None]
 
@@ -28,7 +28,7 @@ GENERATION_STEPS = [
 
 
 def _ts() -> str:
-    return datetime.now(timezone.utc).strftime("%H:%M:%S")
+    return time_now_asia_shanghai()
 
 
 def _log(emit: EmitFn | None, message: str, level: str = "INFO") -> None:

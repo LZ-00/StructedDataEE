@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -14,13 +13,14 @@ from app.finetune.config import FineTuneParams
 from app.finetune.dataset import FineTuneJsonlDataset
 from app.finetune.lora_setup import apply_lora
 from app.finetune.model_loader import load_base_model_from_registry
+from app.timezone_utils import slug_now_asia_shanghai, time_now_asia_shanghai
 
 EmitFn = Callable[[dict[str, Any]], None]
 LogFn = Callable[[str, str], None]
 
 
 def _ts() -> str:
-    return datetime.now(timezone.utc).strftime("%H:%M:%S")
+    return time_now_asia_shanghai()
 
 
 def _log(emit: EmitFn | None, msg: str, level: str = "INFO") -> None:
@@ -58,7 +58,7 @@ def run_lora_finetune(
     *,
     emit: EmitFn | None = None,
 ) -> dict[str, Any]:
-    run_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
+    run_id = slug_now_asia_shanghai() + "_" + uuid.uuid4().hex[:8]
     output_dir = ft_catalog.checkpoint_dir(run_id)
     output_dir.mkdir(parents=True, exist_ok=True)
     _log(emit, f"  → 权重根目录: {ft_catalog.finetune_output_base()}")

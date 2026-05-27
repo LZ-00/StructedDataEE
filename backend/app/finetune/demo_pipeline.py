@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from app.finetune.config import FineTuneParams
+from app.timezone_utils import time_now_asia_shanghai
 
 EmitFn = Callable[[dict[str, Any]], None]
 LogFn = Callable[[str, str], None]
@@ -15,13 +16,11 @@ LogFn = Callable[[str, str], None]
 
 def _log(emit: EmitFn | None, msg: str, level: str = "INFO") -> None:
     if emit:
-        from datetime import datetime, timezone
-
         emit(
             {
                 "type": "log",
                 "level": level,
-                "time": datetime.now(timezone.utc).strftime("%H:%M:%S"),
+                "time": time_now_asia_shanghai(),
                 "message": msg,
             }
         )

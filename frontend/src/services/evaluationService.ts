@@ -1,5 +1,5 @@
 import { apiClient } from '@/api/client'
-import type { EvaluationConfig, EvaluationResult } from '@/types'
+import type { EvaluationConfig, EvaluationRecordResult, EvaluationResult } from '@/types'
 import type { EvaluationOptions } from '@/types/api'
 
 const AUTH_TOKEN_KEY = 'sdweb_access_token'
@@ -25,6 +25,7 @@ export interface EvaluateStreamHandlers {
   onCotStart?: (index: number, total: number, preview: string) => void
   onCotDelta?: (text: string) => void
   onCotEnd?: (index: number) => void
+  onSampleResult?: (record: EvaluationRecordResult) => void
   onDone?: (evaluation: EvaluationResult) => void
   onCancelled?: (message: string) => void
   onError?: (message: string) => void
@@ -44,23 +45,25 @@ export const evaluationService = {
     handlers: EvaluateStreamHandlers,
     signal?: AbortSignal
   ): Promise<EvaluationResult | null> {
+    if (!config.file) {
+      throw new Error('请先上传结构化抽取结果 JSON 文件')
+    }
     const token = sessionStorage.getItem(AUTH_TOKEN_KEY)
+    const formData = new FormData()
+    formData.set('model', config.model)
+    formData.set('file', config.file)
     const res = await fetch(`${apiBaseUrl()}/evaluation/evaluate/stream`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
-      body: JSON.stringify({
-        model: config.model,
-        groundTruth: config.groundTruth
-      }),
+      body: formData,
       signal
     })
 
     if (!res.ok) {
       const text = await res.text().catch(() => '')
-      throw new Error(text || `评估请求失败 HTTP ${res.status}`)
+      throw new Error(parseHttpErrorMessage(text, res.status))
     }
 
     const reader = res.body?.getReader()
@@ -106,6 +109,8 @@ export const evaluationService = {
         handlers.onCotDelta?.(String(payload.text || ''))
       } else if (payload.type === 'cot_end') {
         handlers.onCotEnd?.(payload.index as number)
+      } else if (payload.type === 'sample_result' && payload.record) {
+        handlers.onSampleResult?.(payload.record as EvaluationRecordResult)
       } else if (payload.type === 'done' && payload.evaluation) {
         finalEvaluation = payload.evaluation as EvaluationResult
         handlers.onDone?.(finalEvaluation)
@@ -137,4 +142,20 @@ export const evaluationService = {
 
     return finalEvaluation
   }
+}
+
+function parseHttpErrorMessage(rawText: string, status: number): string {
+  if (!rawText) return `评估请求失败 HTTP ${status}`
+  try {
+    const parsed = JSON.parse(rawText) as { detail?: unknown; message?: unknown }
+    if (typeof parsed.detail === 'string' && parsed.detail.trim()) {
+      return parsed.detail
+    }
+    if (typeof parsed.message === 'string' && parsed.message.trim()) {
+      return parsed.message
+    }
+  } catch {
+    // keep raw text fallback
+  }
+  return rawText || `评估请求失败 HTTP ${status}`
 }

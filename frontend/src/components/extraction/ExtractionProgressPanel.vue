@@ -114,7 +114,7 @@ function chunkSequence(chunkId: string): number | null {
 
 function chunkMetaTags(chunk: ExtractionChunkPreview): ChunkMetaTag[] {
   return buildChunkMetaTags(chunk, { totalChunks: props.chunks.length }).filter(
-    (tag) => tag.key !== 'seq'
+    (tag) => tag.key !== 'seq' && tag.key !== 'lang'
   )
 }
 

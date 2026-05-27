@@ -82,6 +82,15 @@ function toExcerpt(text: string): string {
   return `${plain.slice(0, 240)}...`
 }
 
+function nowAsiaShanghaiIsoString(): string {
+  const now = new Date()
+  const shanghaiText = now.toLocaleString('sv-SE', {
+    timeZone: 'Asia/Shanghai',
+    hour12: false
+  })
+  return `${shanghaiText.replace(' ', 'T')}+08:00`
+}
+
 function mapRecord(item: ExtractionItem, record: MaterialExtractionRecord, index: number): LaserWeldingRecord {
   const sourceChunkIds = Array.isArray(record.source_chunk_ids) && record.source_chunk_ids.length
     ? [...record.source_chunk_ids]
@@ -148,7 +157,7 @@ export function buildLaserWeldingExportPayload(
   return {
     export_meta: {
       schema_version: 'laser-welding-v1',
-      exported_at: new Date().toISOString(),
+      exported_at: nowAsiaShanghaiIsoString(),
       task_type: 'laser_welding_extraction',
       task_description: options.taskDescription.trim(),
       model: options.model,

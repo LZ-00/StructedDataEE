@@ -36,11 +36,8 @@ export interface ExtractionWorkspaceOptions {
 
 export interface EvaluationOptions {
   models: SelectOption[]
-  ground_truths: SelectOption[]
-  default_ground_truth?: string
   step_descriptions: string[]
   example_cot_log: string
-  benchmark_sample_count?: number
 }
 
 export interface DistillationCotSample {

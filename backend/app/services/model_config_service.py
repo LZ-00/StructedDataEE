@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import json
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Optional
 
 from app.config import model_catalog as catalog
 from app.services import model_test_service
+from app.timezone_utils import iso_now_asia_shanghai
 
 _REGISTRY_PATH = Path(__file__).resolve().parent.parent / "data" / "models_registry.json"
 _DEFAULT_BASE_DIR = catalog.DEFAULT_LOCAL_BASE_DIR
@@ -21,7 +21,7 @@ _registry: list[dict[str, Any]] = []
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return iso_now_asia_shanghai()
 
 
 def _mask_secret(value: str) -> str:
