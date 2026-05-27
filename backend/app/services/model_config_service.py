@@ -274,7 +274,9 @@ def create_model(payload: dict[str, Any]) -> dict[str, Any]:
         }
         item["api_config"] = None
 
-    _validate_model_item(item)
+    # API 添加时校验连通性；本地模型允许先注册，再通过列表「下载」拉取权重
+    if model_type == "api":
+        _validate_model_item(item)
     _registry.append(item)
     _save_registry()
     return _public_item(item)

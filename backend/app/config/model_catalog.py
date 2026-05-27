@@ -130,16 +130,14 @@ FORM_EXAMPLE_MODELSCOPE_IDS: list[str] = [
     "Qwen/Qwen2.5-7B-Instruct",
     "Qwen/Qwen2.5-3B-Instruct",
     "LLM-Research/Meta-Llama-3.1-8B-Instruct",
-    "microsoft/Phi-3.5-mini-instruct",
     "deepseek-ai/DeepSeek-R1-Distill-Qwen-7B",
 ]
 
 FORM_EXAMPLE_API_MODEL_IDS: list[str] = [
-    "gpt-4o",
-    "gpt-4-turbo",
-    "claude-3-5-sonnet-20241022",
     "deepseek-v4-flash",
     "deepseek-v4-pro",
+    "kimi-k2.6",
+    "glm-5.1",
 ]
 
 # ---------------------------------------------------------------------------

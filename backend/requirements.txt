@@ -3,9 +3,14 @@ uvicorn[standard]>=0.27.0
 python-multipart>=0.0.9
 PyJWT>=2.8.0
 pydantic-settings>=2.1.0
-# LoRA 微调（可选；无 GPU 时自动演示模式）
-torch>=2.0.0
-transformers>=4.40.0
+# LoRA 微调 / BGE-M3 语义分块（torch 与 torchvision 主版本需对齐，见 embedding_loader）
+torch>=2.6.0,<2.7
+torchvision>=0.21.0,<0.22
+transformers>=4.40.0,<5.0
 peft>=0.10.0
 accelerate>=0.27.0
 modelscope>=1.15.0
+pypdf>=4.0.0
+sentence-transformers>=2.2.2,<4.0
+huggingface_hub>=0.20.0
+numpy>=1.24.0

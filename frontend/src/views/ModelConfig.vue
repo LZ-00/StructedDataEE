@@ -137,7 +137,7 @@
               filterable
               allow-create
               default-first-option
-              placeholder="gpt-4o"
+              placeholder="deepseek-v4-flash"
               style="width: 100%"
             >
               <el-option
@@ -199,12 +199,6 @@
               :placeholder="formOptions?.default_base_dir || '/data/lz/modelscope'"
             />
           </el-form-item>
-          <el-form-item label="自定义本地路径（可选）">
-            <el-input
-              v-model="form.localConfig.localPath"
-              placeholder="留空则自动解析为 base_dir / model_id"
-            />
-          </el-form-item>
           <el-alert
             v-if="resolvedPreview"
             type="info"
@@ -213,15 +207,9 @@
             class="path-preview"
             :title="`解析路径：${resolvedPreview}`"
           />
-          <el-button
-            v-if="!isEdit"
-            type="default"
-            :loading="downloading"
-            @click="handleDownloadFromForm"
-          >
-            <el-icon><Download /></el-icon>
-            从 ModelScope 下载权重
-          </el-button>
+          <p v-if="!isEdit" class="local-hint">
+            添加后可在列表中对本地模型使用「下载」拉取 ModelScope 权重，再通过「推理检测」验证。
+          </p>
         </template>
       </el-form>
 
@@ -241,7 +229,7 @@ import { useRouter } from 'vue-router'
 import axios from 'axios'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Download } from '@element-plus/icons-vue'
+import { Plus } from '@element-plus/icons-vue'
 import { modelConfigService } from '@/services/modelConfigService'
 import { formatApiError } from '@/utils/httpError'
 import { logout } from '@/utils/auth'
@@ -256,7 +244,6 @@ import type {
 
 const loading = ref(false)
 const saving = ref(false)
-const downloading = ref(false)
 const downloadingId = ref('')
 const testingId = ref('')
 const loadError = ref('')
@@ -272,15 +259,14 @@ const formRef = ref<FormInstance>()
 const emptyApi = () => ({
   baseUrl: '',
   apiKey: '',
-  modelId: 'gpt-4o',
+  modelId: 'deepseek-v4-flash',
   temperature: 0.7,
   maxTokens: 4096
 })
 
 const emptyLocal = () => ({
   modelId: 'Qwen/Qwen2.5-7B-Instruct',
-  baseDir: '/data/lz/modelscope',
-  localPath: ''
+  baseDir: '/data/lz/modelscope'
 })
 
 const form = reactive({
@@ -319,7 +305,6 @@ watch(
 const resolvedPreview = computed(() => {
   if (form.type !== 'local') return ''
   const base = form.localConfig.baseDir || formOptions.value?.default_base_dir || ''
-  if (form.localConfig.localPath?.trim()) return form.localConfig.localPath.trim()
   if (!form.localConfig.modelId) return ''
   const dsePath = form.localConfig.modelId.replace(/\./g, '___')
   return `${base.replace(/\/$/, '')}/${dsePath}`
@@ -343,8 +328,7 @@ function normalizeRecord(row: ModelRecord): ModelRecord {
     local_config: local
       ? {
           modelId: String(local.modelId ?? local.model_id ?? ''),
-          baseDir: String(local.baseDir ?? local.base_dir ?? '/data/lz/modelscope'),
-          localPath: String(local.localPath ?? local.local_path ?? '')
+          baseDir: String(local.baseDir ?? local.base_dir ?? '/data/lz/modelscope')
         }
       : null
   }
@@ -540,28 +524,6 @@ async function handleDownload(row: ModelRecord) {
   }
 }
 
-async function handleDownloadFromForm() {
-  if (!form.localConfig.modelId) {
-    ElMessage.warning('请先填写 ModelScope 模型 ID')
-    return
-  }
-  downloading.value = true
-  try {
-    const res = await modelConfigService.downloadModel(
-      form.localConfig.modelId,
-      form.localConfig.baseDir
-    )
-    ElMessage.success(res.message)
-  } catch (e: unknown) {
-    const msg =
-      (e as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
-      '下载失败'
-    ElMessage.error(String(msg))
-  } finally {
-    downloading.value = false
-  }
-}
-
 async function handleDelete(row: ModelRecord) {
   try {
     await ElMessageBox.confirm(`确定删除模型「${row.name}」？`, '确认删除', {
@@ -649,7 +611,14 @@ onMounted(() => {
 }
 
 .path-preview {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+.local-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary, #7f8c8d);
+  line-height: 1.5;
 }
 
 .load-error-alert {

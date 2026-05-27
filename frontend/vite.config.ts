@@ -10,13 +10,21 @@ export default defineConfig({
     }
   },
   server: {
+    host: true, // 监听 0.0.0.0，支持局域网 IP / SSH 端口转发访问
     port: 3000,
-    open: true,
+    strictPort: false,
+    open: false, // 远程开发机无图形界面时不尝试自动打开浏览器
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
-        changeOrigin: true
+        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        timeout: 0,
+        proxyTimeout: 0
       }
     }
+  },
+  preview: {
+    host: true,
+    port: 3000
   }
 })

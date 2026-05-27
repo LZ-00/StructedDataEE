@@ -4,7 +4,7 @@
   "description": "结构化数据智能抽取与评估可视化系统",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node ./node_modules/vite/bin/vite.js --host 0.0.0.0 --port 3000",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"

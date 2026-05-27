@@ -31,6 +31,7 @@ export interface ExtractionWorkspaceOptions {
   sample_text: string
   sample_texts?: string[]
   benchmark_source?: string
+  pipeline_defaults?: import('./index').PipelineDefaults
 }
 
 export interface EvaluationOptions {

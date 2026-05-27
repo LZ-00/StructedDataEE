@@ -46,8 +46,11 @@
             <div class="task-description-label">任务描述：</div>
             <el-input
               v-model="taskDescription"
-              placeholder="Extract base materials, process parameters, and associated weld defects or quality outcomes from laser welding reports"
+              type="textarea"
+              :autosize="taskDescriptionAutosize"
+              placeholder="Identify each laser welding experimental record in the following passage…"
               class="task-description-input-inner"
+              resize="none"
               clearable
             />
           </div>
@@ -114,13 +117,37 @@
                 v-model="inputText"
                 type="textarea"
                 :autosize="textAutosize"
-                placeholder="Paste laser welding process report text (English sample aligned with LP-ParamBank)…"
+                placeholder="Paste materials science literature paragraph for extraction…"
                 class="text-input-area"
                 resize="none"
                 @input="handleTextInput"
               />
             </div>
           </div>
+
+          <!-- 分块与流水线进度（抽取结束后保留，可折叠） -->
+          <el-collapse
+            v-if="progressPanelVisible"
+            :key="progressPanelKey"
+            v-model="progressExpanded"
+            class="progress-collapse"
+          >
+            <el-collapse-item name="progress">
+              <template #title>
+                <div class="progress-collapse-title">
+                  <span class="progress-collapse-label">{{ progressPanelTitle }}</span>
+                  <el-tag v-if="isExtracting" size="small" type="warning" effect="plain">进行中</el-tag>
+                  <el-tag v-else size="small" type="success" effect="plain">已完成</el-tag>
+                </div>
+              </template>
+              <ExtractionProgressPanel
+                :steps="pipelineSteps"
+                :chunks="chunkPreviews"
+                :stage-message="stageMessage"
+                chunk-scroll-height="280px"
+              />
+            </el-collapse-item>
+          </el-collapse>
         </el-card>
       </div>
 
@@ -144,12 +171,28 @@
           </template>
 
           <div class="result-panel">
-            <div class="json-view-container" v-if="extractionResult">
+            <div v-if="isExtracting && pipelineSteps.length" class="result-progress-hint">
+              <el-text type="info">抽取进行中，相关块的结构化结果将实时追加显示</el-text>
+            </div>
+            <div class="result-list-container" v-if="displayResult">
               <el-scrollbar height="600px">
-                <pre class="json-content">{{ formattedJSON }}</pre>
+                <ExtractionResultList
+                  :result="displayResult"
+                  :editable="Boolean(extractionResult) && !isExtracting"
+                  @update-record="handleUpdateRecord"
+                  @delete-record="handleDeleteRecord"
+                />
               </el-scrollbar>
             </div>
-            <el-empty v-else description="暂无抽取结果，请先执行抽取操作" :image-size="100" />
+            <el-empty
+              v-else-if="!isExtracting"
+              description="暂无抽取结果，请先执行抽取操作"
+              :image-size="100"
+            />
+            <div v-else class="result-waiting">
+              <el-icon class="is-loading" :size="28"><Loading /></el-icon>
+              <p>等待首个相关块完成抽取…</p>
+            </div>
           </div>
         </el-card>
       </div>
@@ -161,16 +204,25 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import type { UploadFile, UploadFiles } from 'element-plus'
-import { 
-  UploadFilled, 
-  MagicStick, 
-  Download, 
+import {
+  UploadFilled,
+  MagicStick,
+  Download,
   Document,
-  EditPen
+  EditPen,
+  Loading
 } from '@element-plus/icons-vue'
-import { extractionService } from '@/services/extractionService'
+import {
+  extractionService,
+  type ExtractionChunkPreview,
+  type ExtractionStepState
+} from '@/services/extractionService'
 import type { SelectOption } from '@/types/api'
-import type { ExtractionResult } from '@/types'
+import type { DocumentExtractionResult, ExtractionItem, MaterialExtractionRecord } from '@/types'
+import { normalizeExtractionResult } from '@/utils/extractionNormalize'
+import { buildLaserWeldingExportPayload } from '@/utils/extractionExport'
+import ExtractionResultList from '@/components/extraction/ExtractionResultList.vue'
+import ExtractionProgressPanel from '@/components/extraction/ExtractionProgressPanel.vue'
 
 // 顶部控制栏
 const extractionModels = ref<SelectOption[]>([])
@@ -186,45 +238,147 @@ const fileList = ref<UploadFiles>([])
 const uploadedFileName = ref('')
 const uploadedFileSize = ref('')
 const inputText = ref('')
-const hasContent = ref(false)
 
 const textAutosize = { minRows: 12, maxRows: 40 }
+const taskDescriptionAutosize = { minRows: 6, maxRows: 12 }
+const DEFAULT_EXTRACTION_INPUT_TEXT = `Laser wire-filled welding of thin aluminum alloy sheet was performed using a welding power of 2800 W, a welding speed of 1.2 m/min, and a defocusing distance of 0 mm. Argon was used as the shielding gas at a shielding gas flow rate of 20 L/min. Under these welding conditions, the welded joint exhibited a tensile strength of 286 MPa, a yield strength of 175 MPa, and an elongation rate of 7.8%. Porosity defects were observed in the weld bead, suggesting that the selected welding parameters and shielding condition affected the joint quality.`
 
 const textCharCount = computed(() => inputText.value.length)
 
-// 抽取结果
-const extractionResult = ref<ExtractionResult | null>(null)
+// 抽取结果与流式进度
+const extractionResult = ref<DocumentExtractionResult | null>(null)
+const pipelineSteps = ref<ExtractionStepState[]>([])
+const chunkPreviews = ref<ExtractionChunkPreview[]>([])
+const partialItems = ref<ExtractionItem[]>([])
+const stageMessage = ref('')
+const abortController = ref<AbortController | null>(null)
+const progressExpanded = ref<string[]>([])
+const progressPanelVisible = ref(false)
+const progressPanelKey = ref(0)
+let extractionSession = 0
 
-const ENTITY_KEYS = ['text', 'type', 'start', 'end'] as const
-const RELATION_KEYS = ['type', 'source', 'sourceType', 'target', 'targetType', 'evidence'] as const
+const progressRelevantCount = computed(() =>
+  chunkPreviews.value.filter(
+    (c) => c.status === 'relevant' || c.status === 'extracting' || c.status === 'done'
+  ).length
+)
 
-function pickFields<T extends string>(
-  item: Record<string, unknown>,
-  keys: readonly T[]
-): Record<T, unknown> {
-  const out = {} as Record<T, unknown>
-  for (const k of keys) {
-    if (k in item) out[k] = item[k]
+const progressDoneCount = computed(() =>
+  chunkPreviews.value.filter((c) => c.status === 'done').length
+)
+
+const progressPanelTitle = computed(() => {
+  const total = chunkPreviews.value.length
+  if (isExtracting.value) {
+    return total > 0
+      ? `分块与抽取进度（${total} 块，已处理 ${progressDoneCount.value}）`
+      : '分块与抽取进度'
   }
-  return out
+  if (total > 0) {
+    return `分块与抽取进度（共 ${total} 块，相关 ${progressRelevantCount.value}，已抽取 ${progressDoneCount.value}）`
+  }
+  return '分块与抽取进度'
+})
+
+function expandProgressPanels(): void {
+  progressExpanded.value = ['progress']
 }
 
-function normalizeExtractionResult(raw: unknown): ExtractionResult {
-  const data = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
-  const entities = Array.isArray(data.entities)
-    ? data.entities
-        .filter((e): e is Record<string, unknown> => !!e && typeof e === 'object')
-        .map((e) => pickFields(e, ENTITY_KEYS) as ExtractionResult['entities'][number])
-    : []
-  const relations = Array.isArray(data.relations)
-    ? data.relations
-        .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
-        .map((r) => pickFields(r, RELATION_KEYS) as ExtractionResult['relations'][number])
-    : []
+const displayResult = computed((): DocumentExtractionResult | null => {
+  if (extractionResult.value) return extractionResult.value
+  if (partialItems.value.length === 0) return null
+  const records = partialItems.value.flatMap((item) => item.records)
   return {
-    document_id: String(data.document_id ?? ''),
-    entities,
-    relations
+    document_meta: {
+      total_chars: 0,
+      chunk_count: chunkPreviews.value.length,
+      relevant_count: chunkPreviews.value.filter(
+        (c) => c.status === 'relevant' || c.status === 'extracting' || c.status === 'done'
+      ).length,
+      warnings: []
+    },
+    items: [...partialItems.value],
+    records
+  }
+})
+
+function resetProgressState(): void {
+  pipelineSteps.value = []
+  chunkPreviews.value = []
+  partialItems.value = []
+  stageMessage.value = ''
+  progressExpanded.value = []
+  progressPanelVisible.value = false
+  progressPanelKey.value += 1
+}
+
+function cancelActiveExtraction(): void {
+  extractionSession += 1
+  abortController.value?.abort()
+  abortController.value = null
+  isExtracting.value = false
+}
+
+function isCurrentExtractionSession(session: number): boolean {
+  return session === extractionSession
+}
+
+function updateChunkStatus(chunkId: string, status: ExtractionChunkPreview['status'], reason?: string | null): void {
+  const ch = chunkPreviews.value.find((c) => c.chunk_id === chunkId)
+  if (ch) {
+    ch.status = status
+    if (reason !== undefined) ch.relevance_reason = reason
+  }
+}
+
+function buildStreamHandlers(session: number): import('@/services/extractionService').ExtractStreamHandlers {
+  return {
+    onStepInit: (steps) => {
+      if (!isCurrentExtractionSession(session)) return
+      progressPanelVisible.value = true
+      pipelineSteps.value = steps.map((s) => ({
+        title: s.title,
+        description: s.description,
+        status: 'wait'
+      }))
+    },
+    onStep: (index, status) => {
+      if (!isCurrentExtractionSession(session)) return
+      if (pipelineSteps.value[index]) {
+        pipelineSteps.value[index].status = status as ExtractionStepState['status']
+      }
+    },
+    onStage: (_stage, message) => {
+      if (!isCurrentExtractionSession(session)) return
+      stageMessage.value = message
+    },
+    onChunked: (chunks) => {
+      if (!isCurrentExtractionSession(session)) return
+      progressPanelVisible.value = true
+      chunkPreviews.value = chunks
+    },
+    onRelevanceDone: (chunkId, _index, _total, isRelevant, reason) => {
+      if (!isCurrentExtractionSession(session)) return
+      updateChunkStatus(chunkId, isRelevant ? 'relevant' : 'irrelevant', reason ?? null)
+    },
+    onExtractStart: (chunkId) => {
+      if (!isCurrentExtractionSession(session)) return
+      updateChunkStatus(chunkId, 'extracting')
+    },
+    onItem: (item) => {
+      if (!isCurrentExtractionSession(session)) return
+      const existing = partialItems.value.findIndex((i) => i.chunk_id === item.chunk_id)
+      if (existing >= 0) {
+        partialItems.value[existing] = item
+      } else {
+        partialItems.value.push(item)
+      }
+      updateChunkStatus(item.chunk_id, item.error ? 'error' : 'done')
+    },
+    onError: (message) => {
+      if (!isCurrentExtractionSession(session)) return
+      ElMessage.error(message)
+    }
   }
 }
 
@@ -235,19 +389,39 @@ function formatFileSize(bytes: number): string {
 }
 
 function clearUploadedFile(): void {
+  cancelActiveExtraction()
   fileList.value = []
   uploadedFileName.value = ''
   uploadedFileSize.value = ''
-  inputText.value = ''
-  hasContent.value = false
   extractionResult.value = null
+  resetProgressState()
 }
 
-// 格式化 JSON（仅 document_id / entities / relations）
-const formattedJSON = computed(() => {
-  if (!extractionResult.value) return ''
-  return JSON.stringify(extractionResult.value, null, 2)
-})
+function syncFlattenRecords(result: DocumentExtractionResult): void {
+  result.records = result.items.flatMap((item) => item.records)
+}
+
+function handleUpdateRecord(payload: {
+  chunkId: string
+  recordIndex: number
+  record: MaterialExtractionRecord
+}): void {
+  if (!extractionResult.value) return
+  const item = extractionResult.value.items.find((entry) => entry.chunk_id === payload.chunkId)
+  if (!item) return
+  if (payload.recordIndex < 0 || payload.recordIndex >= item.records.length) return
+  item.records[payload.recordIndex] = payload.record
+  syncFlattenRecords(extractionResult.value)
+}
+
+function handleDeleteRecord(payload: { chunkId: string; recordIndex: number }): void {
+  if (!extractionResult.value) return
+  const item = extractionResult.value.items.find((entry) => entry.chunk_id === payload.chunkId)
+  if (!item) return
+  if (payload.recordIndex < 0 || payload.recordIndex >= item.records.length) return
+  item.records.splice(payload.recordIndex, 1)
+  syncFlattenRecords(extractionResult.value)
+}
 
 // 文件变化处理
 const handleFileChange = (file: UploadFile, files: UploadFiles) => {
@@ -255,25 +429,14 @@ const handleFileChange = (file: UploadFile, files: UploadFiles) => {
   if (!file.raw) return
   uploadedFileName.value = file.name
   uploadedFileSize.value = formatFileSize(file.size ?? file.raw.size)
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    const content = (e.target?.result as string) || ''
-    inputText.value = content
-    extractionResult.value = null
-    hasContent.value = !!content.trim()
-  }
-  reader.readAsText(file.raw)
+  extractionResult.value = null
+  resetProgressState()
 }
 
 // 文本输入处理
 const handleTextInput = () => {
-  if (inputText.value.trim()) {
-    extractionResult.value = null
-    hasContent.value = true
-  } else {
-    hasContent.value = false
-    extractionResult.value = null
-  }
+  extractionResult.value = null
+  resetProgressState()
 }
 
 // 执行抽取
@@ -286,34 +449,60 @@ const handleRunExtraction = async () => {
     ElMessage.warning('请先输入待抽取的文本内容')
     return
   }
-  if (!hasContent.value) {
-    ElMessage.warning('请先提供待抽取的内容')
-    return
-  }
-  
+  abortController.value?.abort()
+  abortController.value = new AbortController()
+  const session = ++extractionSession
   isExtracting.value = true
+  extractionResult.value = null
+  resetProgressState()
+  expandProgressPanels()
+  progressPanelVisible.value = true
+
+  const handlers = buildStreamHandlers(session)
+  const signal = abortController.value.signal
+
   try {
-    let result
+    let result: DocumentExtractionResult | null = null
     if (inputMode.value === 'file') {
       const raw = fileList.value[0]?.raw
       if (!raw) {
         ElMessage.warning('请先上传文件')
         return
       }
-      result = await extractionService.extractFromFile(raw, selectedModel.value, taskDescription.value)
+      result = await extractionService.extractFromFileStream(
+        raw,
+        selectedModel.value,
+        taskDescription.value,
+        handlers,
+        signal
+      )
     } else {
-      result = await extractionService.extractFromText({
-        text: inputText.value,
-        model: selectedModel.value,
-        task_description: taskDescription.value
-      })
+      result = await extractionService.extractFromTextStream(
+        {
+          text: inputText.value,
+          model: selectedModel.value,
+          task_description: taskDescription.value
+        },
+        handlers,
+        signal
+      )
     }
-    extractionResult.value = normalizeExtractionResult(result)
-    ElMessage.success('抽取完成！')
-  } catch {
-    ElMessage.error('抽取失败，请确认已登录且后端服务已启动')
+    if (result && isCurrentExtractionSession(session)) {
+      extractionResult.value = normalizeExtractionResult(result)
+      stageMessage.value = '抽取已完成，可展开上方进度面板查看分块与流水线详情。'
+      ElMessage.success('抽取完成！')
+    }
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      if (isCurrentExtractionSession(session)) {
+        ElMessage.info('已取消抽取')
+      }
+    } else {
+      ElMessage.error('抽取失败，请确认已登录且后端服务已启动')
+    }
   } finally {
     isExtracting.value = false
+    abortController.value = null
   }
 }
 
@@ -323,16 +512,20 @@ const handleExportJSON = () => {
     ElMessage.warning('没有可导出的数据')
     return
   }
-  
-  const dataStr = JSON.stringify(extractionResult.value, null, 2)
+
+  const payload = buildLaserWeldingExportPayload(extractionResult.value, {
+    taskDescription: taskDescription.value,
+    model: selectedModel.value
+  })
+  const dataStr = JSON.stringify(payload, null, 2)
   const dataBlob = new Blob([dataStr], { type: 'application/json' })
   const url = URL.createObjectURL(dataBlob)
   const link = document.createElement('a')
   link.href = url
-  link.download = `extraction_result_${Date.now()}.json`
+  link.download = `laser_welding_extraction_${Date.now()}.json`
   link.click()
   URL.revokeObjectURL(url)
-  
+
   ElMessage.success('JSON 导出成功！')
 }
 
@@ -342,12 +535,10 @@ onMounted(async () => {
     extractionModels.value = options.models
     selectedModel.value = options.default_model
     taskDescription.value = options.default_task_description
-    if (options.sample_text?.trim()) {
-      inputText.value = options.sample_text
-      hasContent.value = true
-    }
+    inputText.value = DEFAULT_EXTRACTION_INPUT_TEXT
   } catch {
     ElMessage.warning('工作台配置加载失败，请确认已登录且后端服务已启动')
+    inputText.value = DEFAULT_EXTRACTION_INPUT_TEXT
   }
 })
 </script>
@@ -477,9 +668,11 @@ onMounted(async () => {
   width: 100%;
 }
 
-.task-description-input-inner :deep(.el-input__inner) {
+.task-description-input-inner :deep(.el-textarea__inner) {
   font-size: var(--ui-font-caption);
-  padding: 10px 12px;
+  line-height: 1.65;
+  padding: 12px 14px;
+  min-height: 140px;
 }
 
 .card-header-right {
@@ -752,7 +945,7 @@ onMounted(async () => {
 }
 
 /* JSON 视图 */
-.json-view-container {
+.result-list-container {
   border: 1px solid #E4E7ED;
   border-radius: 4px;
   background: #FFFFFF;
@@ -763,24 +956,70 @@ onMounted(async () => {
   min-height: 0;
 }
 
-.json-content {
-  margin: 0;
-  padding: 20px;
-  color: #303133;
-  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  font-size: var(--ui-font-code);
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background: #FFFFFF;
-}
-
-.json-view-container :deep(.el-scrollbar) {
+.result-list-container :deep(.el-scrollbar) {
   flex: 1;
 }
 
-.json-view-container :deep(.el-scrollbar__wrap) {
-  overflow-x: hidden;
+.result-list-container :deep(.el-scrollbar__wrap) {
+  overflow-x: auto;
+  padding: 14px;
+}
+
+.progress-collapse {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e4e7ed;
+  flex-shrink: 0;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-collapse :deep(.el-collapse-item__header) {
+  padding: 0 14px;
+  height: 44px;
+  background: #fafafa;
+  font-weight: 500;
+}
+
+.progress-collapse :deep(.el-collapse-item__wrap) {
+  border-top: 1px solid #e4e7ed;
+}
+
+.progress-collapse :deep(.el-collapse-item__content) {
+  padding: 14px;
+}
+
+.progress-collapse-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.progress-collapse-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-progress-hint {
+  margin-bottom: 12px;
+}
+
+.result-waiting {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #909399;
+  font-size: 14px;
 }
 
 /* 响应式布局 */

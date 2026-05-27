@@ -13,9 +13,22 @@
 
 ### 后端依赖
 
+**推荐：使用 conda 环境 `lz-HV-FT`（含 torch / modelscope）**
+
+```bash
+conda activate lz-HV-FT   # 若无此环境，可用: export SDWEB_CONDA_ENV=lz-FT
+cd backend
+pip install -r requirements.txt
+# 语义分块 embedding（可选，抽取工作台文件上传需要）
+python ../scripts/download_embedding_model.py
+```
+
+**备选：Python 虚拟环境**
+
 ```bash
 cd backend
 python3 -m venv .venv
+chmod +x .venv/bin/python*       # 若 .venv/bin/python 无执行权限需执行此行
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
@@ -48,10 +61,18 @@ cd frontend && npm install
 npm run dev:backend
 ```
 
-等价于：
+等价于（自动选择 conda `lz-HV-FT` / `lz-FT`，或 `backend/.venv`）：
 
 ```bash
-cd backend && .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+bash scripts/dev-backend.sh
+```
+
+指定环境或端口：
+
+```bash
+export SDWEB_CONDA_ENV=lz-FT
+export SDWEB_BACKEND_PORT=8000
+npm run dev:backend
 ```
 
 **方式二：进入 backend 目录手动启动**
@@ -113,9 +134,33 @@ npm run dev -- --host 127.0.0.1 --port 3000
 
 | 项目 | 值 |
 |------|-----|
-| 访问地址 | http://localhost:3000 |
+| 访问地址（本机） | http://localhost:3000 或 http://127.0.0.1:3000 |
+| 访问地址（局域网/远程浏览器） | 启动日志中的 `Network: http://<服务器IP>:3000/`（需 `host: 0.0.0.0`，已默认开启） |
 | API 代理 | 开发环境下 `/api` 代理至 `http://127.0.0.1:8000`（见 `frontend/vite.config.ts`） |
 | 默认账号 | **root** / **123456** |
+
+**注意：** 若仅监听 `127.0.0.1`，在其他机器浏览器输入服务器 IP 会显示「无法访问」。请使用 `npm run dev:frontend`（已配置 `--host 0.0.0.0`）。
+
+### 远程开发：浏览器报 `ERR_CONNECTION_REFUSED`（127.0.0.1:3000）
+
+开发机跑在 Linux 服务器上、浏览器在你自己的电脑上时，`http://127.0.0.1:3000` 指向**你电脑本机**，不是服务器，因此会连接被拒绝。
+
+任选一种方式：
+
+1. **Cursor / VS Code 端口转发（推荐）**  
+   - 先 `npm run dev:frontend`  
+   - 打开「端口 / Ports」面板，确认 **3000** 已转发到本地  
+   - 在本地浏览器访问 Cursor 提示的地址（多为 `http://127.0.0.1:3000`）
+
+2. **局域网 IP**（与服务器同一网段）  
+   - 看启动日志里的 `Network: http://172.x.x.x:3000/`  
+   - 在本机浏览器访问该地址（不要用服务器的 127.0.0.1）
+
+3. **SSH 隧道**（在本地终端执行）  
+   ```bash
+   ssh -L 3000:127.0.0.1:3000 用户名@服务器IP
+   ```  
+   然后本地浏览器打开 http://127.0.0.1:3000
 
 ---
 
@@ -146,5 +191,9 @@ DEFAULT_PASSWORD=123456
 ## 常见问题
 
 1. **前端无法访问接口**：确认后端已在 8000 端口运行，且 `curl http://127.0.0.1:8000/api/health` 返回正常。
-2. **3000 端口被占用**：Vite 会自动尝试其他端口，或使用 `npm run dev -- --port 3001` 指定端口。
-3. **未创建虚拟环境**：先执行上文「首次安装 → 后端依赖」中的 `venv` 与 `pip install` 步骤。
+2. **后端启动报 `Address already in use`**：8000 端口被旧进程占用。执行 `pkill -f 'uvicorn app.main:app'` 后重试，或 `export SDWEB_BACKEND_PORT=8001`。
+3. **conda 环境 `lz-HV-FT` 不存在**：`export SDWEB_CONDA_ENV=lz-FT` 后重新 `npm run dev:backend`；或安装 micromamba/conda 中的 `lz-HV-FT`。
+4. **`.venv/bin/python: Permission denied`**：执行 `chmod +x backend/.venv/bin/python*` 或重建虚拟环境。
+5. **前端页面无法打开 / 无法访问**：确认 Vite 日志中有 `Network: http://<IP>:3000/`；用 `ss -tln | grep 3000` 应看到 `0.0.0.0:3000` 而非仅 `127.0.0.1:3000`。重启：`pkill -f vite/bin/vite && npm run dev:frontend`。
+6. **3000 端口被占用**：Vite 会自动尝试其他端口，或使用 `SDWEB_FRONTEND_PORT=3001 npm run dev:frontend`。
+6. **抽取报「语义 embedding 不可用」**：在 `lz-HV-FT`/`lz-FT` 中安装 `sentence-transformers`，并运行 `python scripts/download_embedding_model.py` 下载 BGE-M3 至 `/data/lz/modelscope/embedding`。

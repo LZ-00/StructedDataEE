@@ -3,7 +3,7 @@
     "id": "local-qwen-7b",
     "name": "Qwen2.5-7B-Instruct",
     "type": "local",
-    "enabled": true,
+    "enabled": false,
     "description": "ModelScope 本地权重，激光焊接关系抽取主模型",
     "local_config": {
       "model_id": "Qwen/Qwen2.5-7B-Instruct",
@@ -12,54 +12,7 @@
     },
     "api_config": null,
     "created_at": "2026-05-16T09:58:39.869662+00:00",
-    "updated_at": "2026-05-16T11:11:12.390647+00:00"
-  },
-  {
-    "id": "local-qwen-3b",
-    "name": "Qwen2.5-3B-Instruct",
-    "type": "local",
-    "enabled": false,
-    "description": "轻量级本地 instruct 模型",
-    "local_config": {
-      "model_id": "Qwen/Qwen2.5-3B-Instruct",
-      "base_dir": "/data/lz/modelscope",
-      "local_path": ""
-    },
-    "api_config": null,
-    "created_at": "2026-05-16T09:58:39.869662+00:00",
-    "updated_at": "2026-05-17T02:13:42.557080+00:00"
-  },
-  {
-    "id": "local-llama-8b",
-    "name": "Llama-3.1-8B-Instruct",
-    "type": "local",
-    "enabled": true,
-    "description": "Meta Llama 3.1 8B 本地部署",
-    "local_config": {
-      "model_id": "LLM-Research/Meta-Llama-3.1-8B-Instruct",
-      "base_dir": "/data/lz/modelscope",
-      "local_path": ""
-    },
-    "api_config": null,
-    "created_at": "2026-05-16T09:58:39.869662+00:00",
-    "updated_at": "2026-05-16T09:58:39.869662+00:00"
-  },
-  {
-    "id": "api-gpt4o",
-    "name": "GPT-4o",
-    "type": "api",
-    "enabled": true,
-    "description": "OpenAI 兼容 API，适用于蒸馏教师模型",
-    "api_config": {
-      "base_url": "",
-      "api_key": "",
-      "model_id": "gpt-4o",
-      "temperature": 0.7,
-      "max_tokens": 4096
-    },
-    "local_config": null,
-    "created_at": "2026-05-16T09:58:39.869662+00:00",
-    "updated_at": "2026-05-16T09:58:39.869662+00:00"
+    "updated_at": "2026-05-27T10:08:08.206231+00:00"
   },
   {
     "id": "7ad89eb3-425c-41eb-bbde-d709c4b2699b",
