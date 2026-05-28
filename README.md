@@ -29,6 +29,48 @@ npm run dev:frontend
 
 浏览器访问 http://localhost:3000 ，默认账号：**root** / **123456**。
 
+## Docker 部署（离线可用）
+
+项目已提供 Docker Compose 双服务部署：
+- `frontend`：Nginx 托管前端静态资源，并反向代理 `/api` 到后端。
+- `backend`：FastAPI 服务，镜像构建阶段预打包 `BAAI/bge-m3` 权重，离线运行可直接使用语义分块能力。
+
+### 1) 构建并启动（CPU）
+
+```bash
+docker compose up -d --build
+```
+
+访问地址：
+- 前端：`http://<host>:3000`
+- 后端健康检查：`http://<host>:8000/api/health`
+
+### 2) 启用 GPU（可选）
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
+要求宿主机已安装 NVIDIA 驱动与 nvidia-container-toolkit。
+
+### 3) 离线交付（镜像导出/导入）
+
+在可联网构建机执行：
+
+```bash
+docker compose build
+docker save -o sdweb-backend.tar sdweb/backend:latest
+docker save -o sdweb-frontend.tar sdweb/frontend:latest
+```
+
+在离线目标机执行：
+
+```bash
+docker load -i sdweb-backend.tar
+docker load -i sdweb-frontend.tar
+docker compose up -d
+```
+
 ## API 概览
 
 | 模块 | 路径前缀 | 说明 |
@@ -38,7 +80,6 @@ npm run dev:frontend
 | 评估 | `POST /api/evaluation/evaluate` | 质量评估 + CoT 日志 |
 | 蒸馏 | `POST /api/distillation/generate-dataset` | 思维链蒸馏数据构建 |
 | 微调 | `POST /api/finetune/run`、`/publish` | LoRA 微调与发布 |
-| 仪表盘 | `GET /api/dashboard/stats`、`/stat-cards`、`/charts` | 汇总统计与图表数据 |
 | 配置 | `GET /api/extraction/options`、`/evaluation/options`、`/distillation/options`、`/finetune/options` | 各页面下拉与默认值 |
 
 业务实现位于 `backend/app/services/`，可按需替换为真实模型与数据库。

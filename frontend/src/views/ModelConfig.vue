@@ -225,16 +225,11 @@
 
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import axios from 'axios'
 import type { FormInstance, FormRules } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { modelConfigService } from '@/services/modelConfigService'
 import { formatApiError } from '@/utils/httpError'
-import { logout } from '@/utils/auth'
-
-const router = useRouter()
 import type {
   ModelConfigFormOptions,
   ModelRecord,
@@ -345,10 +340,6 @@ async function loadModels() {
     loadError.value = msg
     models.value = []
     ElMessage.error(msg)
-    if (axios.isAxiosError(e) && e.response?.status === 401) {
-      logout()
-      router.push({ name: 'Login', query: { redirect: '/models' } })
-    }
   } finally {
     loading.value = false
   }

@@ -30,10 +30,6 @@
               <span>模型配置</span>
             </el-menu-item>
           </el-menu>
-          <el-button type="primary" link class="logout-btn" @click="handleLogout">
-            <el-icon><SwitchButton /></el-icon>
-            <span>退出登录</span>
-          </el-button>
         </div>
       </div>
     </el-header>
@@ -51,10 +47,8 @@ import {
   DocumentCopy,
   Monitor,
   Setting,
-  Cpu,
-  SwitchButton
+  Cpu
 } from '@element-plus/icons-vue'
-import { logout } from '@/utils/auth'
 
 const route = useRoute()
 const router = useRouter()
@@ -70,11 +64,6 @@ const activeIndex = computed(() => {
 
 const handleMenuSelect = (key: string) => {
   router.push(`/${key}`)
-}
-
-const handleLogout = () => {
-  logout()
-  router.push({ name: 'Login' })
 }
 </script>
 
@@ -164,17 +153,6 @@ const handleLogout = () => {
 
 .header-menu :deep(.el-menu-item .el-icon) {
   color: inherit;
-}
-
-.logout-btn {
-  color: rgba(255, 255, 255, 0.9) !important;
-  font-size: var(--el-font-size-base);
-  flex-shrink: 0;
-  margin-left: 8px;
-}
-
-.logout-btn:hover {
-  color: #6baed6 !important;
 }
 
 .app-main {

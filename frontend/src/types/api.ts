@@ -7,23 +7,6 @@ export interface SelectOption {
   value: string
 }
 
-export interface DashboardStats {
-  total_extractions: number
-  evaluations_done: number
-  avg_accuracy_percent: string
-  model_count: number
-}
-
-export interface StatCardMeta {
-  key: keyof DashboardStats
-  title: string
-}
-
-export interface DashboardCharts {
-  exact_match: { models: string[]; values: number[] }
-  rmse: { models: string[]; values: number[] }
-}
-
 export interface ExtractionWorkspaceOptions {
   models: SelectOption[]
   default_model: string

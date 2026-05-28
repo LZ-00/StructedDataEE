@@ -4,13 +4,11 @@
 
 export { apiClient as default } from '@/api/client'
 export { authService } from '@/services/authService'
-export { dashboardService } from '@/services/dashboardService'
 export { extractionService } from '@/services/extractionService'
 export { evaluationService } from '@/services/evaluationService'
 export { distillationService, finetuneService } from '@/services/distillationService'
 
 import { authService } from '@/services/authService'
-import { dashboardService } from '@/services/dashboardService'
 import { extractionService } from '@/services/extractionService'
 import { evaluationService } from '@/services/evaluationService'
 import { distillationService, finetuneService } from '@/services/distillationService'
@@ -41,8 +39,6 @@ export const api = {
     handlers: Parameters<typeof evaluationService.evaluateStream>[1],
     signal?: AbortSignal
   ) => evaluationService.evaluateStream(config, handlers, signal),
-
-  getDashboardStats: () => dashboardService.getStats(),
 
   generateDistillationDataset: (body: {
     teacherModel: string

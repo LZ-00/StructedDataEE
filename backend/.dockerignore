@@ -1,0 +1,9 @@
+.venv
+__pycache__
+**/__pycache__
+.pytest_cache
+tests/.pytest_cache
+app/data/distillation/generated
+app/data/distillation/uploads
+app/data/distillation/finetune
+*.log

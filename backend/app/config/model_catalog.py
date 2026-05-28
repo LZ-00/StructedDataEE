@@ -2,7 +2,7 @@
 系统模型与演示指标的统一配置。
 
 各业务模块通过 model_config_service 读取本文件中的定义；
-修改可用模型、默认选型或仪表盘基准数据时，仅需维护此文件。
+修改可用模型、默认选型时，仅需维护此文件。
 """
 
 from __future__ import annotations
@@ -166,21 +166,6 @@ FINETUNE_DEFAULTS: dict[str, Any] = {
 
 FINETUNE_LEARNING_RATES: list[str] = ["1e-5", "2e-5", "5e-5", "1e-4"]
 
-# ---------------------------------------------------------------------------
-# 仪表盘：模型基准评测（展示用短名称，与注册表 id 独立）
-# ---------------------------------------------------------------------------
-
-DASHBOARD_MODEL_METRICS: list[dict[str, Any]] = [
-    {"name": "Qwen2.5-1.5B", "exact_match": 41.00, "rmse": 1.285},
-    {"name": "Phi-3.5-mini", "exact_match": 56.10, "rmse": 0.896},
-    {"name": "Qwen2.5-3B", "exact_match": 68.00, "rmse": 0.893},
-    {"name": "Qwen2.5-7B", "exact_match": 79.80, "rmse": 0.414},
-    {"name": "Llama-3.1-8B", "exact_match": 76.00, "rmse": 0.519},
-    {"name": "DeepSeek-R1-Qwen-7B", "exact_match": 73.40, "rmse": 0.960},
-    {"name": "DeepSeek-R1-Llama-8B", "exact_match": 74.30, "rmse": 0.987},
-]
-
-
 def fallback_select_options(
     usage: ModelUsage,
     *,
@@ -204,8 +189,3 @@ def resolve_default_model_id(usage: ModelUsage) -> str:
     if fallbacks:
         return fallbacks[0]["value"]
     return ""
-
-
-def model_count_for_dashboard() -> int:
-    """仪表盘「模型数量」统计：以基准评测模型数为准。"""
-    return len(DASHBOARD_MODEL_METRICS)

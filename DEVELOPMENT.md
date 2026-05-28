@@ -83,7 +83,7 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-**注意：** 修改 `backend/app/` 下代码后，必须使用带 `--reload` 的方式启动（方式一或方式二）。若用无热重载方式启动，新增 API（如 `GET /api/dashboard/charts`）不会生效，前端会出现 **404** 并提示「仪表盘数据加载失败」。
+**注意：** 修改 `backend/app/` 下代码后，必须使用带 `--reload` 的方式启动（方式一或方式二）。若用无热重载方式启动，新增 API 可能不会生效。
 
 **方式三：不启用热重载（仅生产或调试时使用）**
 
@@ -176,6 +176,63 @@ npm run dev -- --host 127.0.0.1 --port 3000
 
 ---
 
+## Docker 部署（统一环境）
+
+适用于将项目部署到任意主机并保持一致运行环境（前端 + 后端）。
+
+### CPU 默认部署
+
+```bash
+cd /path/to/code
+docker compose up -d --build
+```
+
+访问：
+- 前端：`http://<host>:3000`
+- 后端健康检查：`http://<host>:8000/api/health`
+
+### GPU 可选部署（NVIDIA）
+
+```bash
+cd /path/to/code
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+```
+
+要求宿主机已安装 NVIDIA 驱动与 `nvidia-container-toolkit`。
+
+### 离线部署说明（含 BGE-M3）
+
+- `backend/Dockerfile` 在构建阶段会预下载并打包 `BAAI/bge-m3` 到 `/data/lz/modelscope/embedding`。
+- 部署运行时无需访问外网即可加载 embedding 权重。
+
+联网构建机导出镜像：
+
+```bash
+docker compose build
+docker save -o sdweb-backend.tar sdweb/backend:latest
+docker save -o sdweb-frontend.tar sdweb/frontend:latest
+```
+
+离线目标机导入并启动：
+
+```bash
+docker load -i sdweb-backend.tar
+docker load -i sdweb-frontend.tar
+docker compose up -d
+```
+
+### 常用运维命令
+
+```bash
+docker compose ps
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose down
+docker compose down -v
+```
+
+---
+
 ## 环境变量（可选）
 
 在 `backend/.env` 中可配置：
@@ -196,4 +253,5 @@ DEFAULT_PASSWORD=123456
 4. **`.venv/bin/python: Permission denied`**：执行 `chmod +x backend/.venv/bin/python*` 或重建虚拟环境。
 5. **前端页面无法打开 / 无法访问**：确认 Vite 日志中有 `Network: http://<IP>:3000/`；用 `ss -tln | grep 3000` 应看到 `0.0.0.0:3000` 而非仅 `127.0.0.1:3000`。重启：`pkill -f vite/bin/vite && npm run dev:frontend`。
 6. **3000 端口被占用**：Vite 会自动尝试其他端口，或使用 `SDWEB_FRONTEND_PORT=3001 npm run dev:frontend`。
-6. **抽取报「语义 embedding 不可用」**：在 `lz-HV-FT`/`lz-FT` 中安装 `sentence-transformers`，并运行 `python scripts/download_embedding_model.py` 下载 BGE-M3 至 `/data/lz/modelscope/embedding`。
+7. **抽取报「语义 embedding 不可用」**：在 `lz-HV-FT`/`lz-FT` 中安装 `sentence-transformers`，并运行 `python scripts/download_embedding_model.py` 下载 BGE-M3 至 `/data/lz/modelscope/embedding`。
+8. **Docker GPU 不生效**：执行 `docker info | rg -i nvidia` 检查运行时；若缺失，请安装 `nvidia-container-toolkit` 并重启 Docker。

@@ -1,21 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
-import { isAuthenticated } from '@/utils/auth'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/Login.vue'),
-    meta: { public: true }
+    redirect: '/extraction'
   },
   {
     path: '/',
     component: () => import('@/Layout.vue'),
-    meta: { requiresAuth: true },
     children: [
       { path: '', redirect: 'extraction' },
-      { path: 'dashboard', redirect: 'extraction' },
       {
         path: 'extraction',
         name: 'Extraction',
@@ -43,17 +39,6 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
-
-router.beforeEach((to) => {
-  const authed = isAuthenticated()
-  if (to.meta.requiresAuth && !authed) {
-    return { name: 'Login', query: { redirect: to.fullPath } }
-  }
-  if (to.name === 'Login' && authed) {
-    return { path: '/extraction' }
-  }
-  return true
 })
 
 export default router

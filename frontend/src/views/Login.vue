@@ -71,8 +71,7 @@ const handleSubmit = async () => {
     }
     ElMessage.success('登录成功')
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/extraction'
-    const target = redirect === '/dashboard' ? '/extraction' : redirect || '/extraction'
-    router.replace(target)
+    router.replace(redirect || '/extraction')
   } finally {
     submitting.value = false
   }
