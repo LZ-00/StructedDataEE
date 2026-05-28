@@ -24,7 +24,7 @@ COT_API_CALL_DELAY_SEC = float(os.getenv("COT_API_CALL_DELAY_SEC", "0.5"))
 
 TRAINING_DATASETS: dict[str, dict[str, str]] = {
     LP_PARAM_DATASET_ID: {
-        "label": "工艺参数规范库 (LP-ParamBank)",
+        "label": "样例数据集",
         "csv": "lp_param_bank.csv",
         "description": "激光焊接工艺参数与缺陷关系抽取评测集",
     },

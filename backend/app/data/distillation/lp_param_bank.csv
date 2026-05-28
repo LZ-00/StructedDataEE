@@ -1,11 +1,11 @@
-passage,gold_relations,ai_predicted_relations,true_correct,true_total
-"铝合金薄板激光填丝焊，设定激光功率 2.8 kW，焊接速度 1.2 m/min，保护气 Ar，焊缝出现气孔缺陷。","process_parameter: 2.8 kW; defect: porosity","process_parameter: 2.8 kW laser power; defect: porosity",1,1
-"304 不锈钢对接焊，工艺卡要求功率 3.0 kW，实测熔宽不足并伴随咬边。","process_parameter: 3.0 kW; defect: undercut","process_parameter: 3.0 kW; defect: edge undercut",1,1
-"6061-T6 板材 PA 焊，ER4043 填丝，功率 2.5 kW，未在标准中标注飞溅异常。","material: 6061-T6; filler: ER4043","material: ER4043; defect: spatter",0,2
-"双相不锈钢激光焊，热输入偏高导致晶粒粗化，标准答案仅记录未熔合风险。","defect: lack of fusion risk","defect: coarse grain; defect: lack of fusion",1,2
-"钛合金密封焊，功率窗口 1.8–2.2 kW，当前点 2.0 kW，表面氧化色正常。","process_parameter: 1.8–2.2 kW range","process_parameter: 2.0 kW setpoint",0,1
-"镀锌板激光钎焊，激光功率 1.6 kW，焊缝成形良好，无缺陷检出。","process_parameter: 1.6 kW; quality: acceptable weld","process_parameter: 1.6 kW; quality: acceptable weld",2,2
-"镍基高温合金堆焊，保护气 He，层间温度超标引起裂纹倾向。","shielding_gas: He; defect: crack susceptibility","shielding_gas: He; defect: hot cracking",1,1
-"铜铝异种金属激光焊，功率 4.2 kW，界面脆性相导致剥离。","process_parameter: 4.2 kW; defect: brittle intermetallic","process_parameter: 4.2 kW; defect: delamination",1,2
-"高强钢激光深熔焊，功率 5.0 kW，保护气 CO2，飞溅与气孔并存。","process_parameter: 5.0 kW; defect: porosity; defect: spatter","process_parameter: 5.0 kW; defect: porosity",1,2
-"镁合金激光焊，功率 1.2 kW，氧化膜未充分去除导致未熔合。","process_parameter: 1.2 kW; defect: lack of fusion","process_parameter: 1.2 kW; defect: oxide inclusion",0,1
+passage,ai_predicted_relations,true_correct,true_total
+铝合金薄板激光填丝焊，设定激光功率 2.8 kW，焊接速度 1.2 m/min，保护气 Ar，焊缝出现气孔缺陷。,process_parameter: 2.8 kW laser power; defect: porosity,1,1
+304 不锈钢对接焊，工艺卡要求功率 3.0 kW，实测熔宽不足并伴随咬边。,process_parameter: 3.0 kW; defect: edge undercut,1,1
+6061-T6 板材 PA 焊，ER4043 填丝，功率 2.5 kW，未在标准中标注飞溅异常。,material: ER4043; defect: spatter,0,2
+双相不锈钢激光焊，热输入偏高导致晶粒粗化，标准答案仅记录未熔合风险。,defect: coarse grain; defect: lack of fusion,1,2
+钛合金密封焊，功率窗口 1.8–2.2 kW，当前点 2.0 kW，表面氧化色正常。,process_parameter: 2.0 kW setpoint,0,1
+镀锌板激光钎焊，激光功率 1.6 kW，焊缝成形良好，无缺陷检出。,process_parameter: 1.6 kW; quality: acceptable weld,2,2
+镍基高温合金堆焊，保护气 He，层间温度超标引起裂纹倾向。,shielding_gas: He; defect: hot cracking,1,1
+铜铝异种金属激光焊，功率 4.2 kW，界面脆性相导致剥离。,process_parameter: 4.2 kW; defect: delamination,1,2
+高强钢激光深熔焊，功率 5.0 kW，保护气 CO2，飞溅与气孔并存。,process_parameter: 5.0 kW; defect: porosity,1,2
+镁合金激光焊，功率 1.2 kW，氧化膜未充分去除导致未熔合。,process_parameter: 1.2 kW; defect: oxide inclusion,0,1

@@ -43,7 +43,6 @@ export interface EvaluationOptions {
 export interface DistillationCotSample {
   id: number
   context: string
-  gold_standard: string
   ai_prediction: string
   verified_score: string
   cot_trace: string
@@ -72,7 +71,7 @@ export interface DistillationGenerateResponse {
 export interface FinetuneTrainingDataset {
   path: string
   filename: string
-  source: 'distillation_saved' | 'bundled' | 'dse' | 'missing'
+  source: 'distillation_saved' | 'bundled' | 'dse' | 'missing' | 'uploaded'
   sample_count: number
   modified_at?: string
   candidate_count?: number
@@ -89,8 +88,11 @@ export interface FinetuneOptions {
     batchSize: number
     learningRate: string
     modelName: string
+    trainingDatasetPath?: string
   }
   training_dataset?: FinetuneTrainingDataset
+  training_datasets?: FinetuneTrainingDataset[]
+  default_training_dataset?: string
 }
 
 export type ModelDeployType = 'api' | 'local'

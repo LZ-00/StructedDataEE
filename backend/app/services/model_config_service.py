@@ -162,18 +162,14 @@ def get_select_options(
     types: Optional[list[ModelType]] = None,
 ) -> list[dict[str, str]]:
     """
-    获取业务模块可用模型列表：优先注册表，否则回退至 model_catalog 中的静态配置。
+    获取业务模块可用模型列表：仅返回“已注册且启用”的模型。
     """
-    registered = models_as_select_options(types=types)
-    if registered:
-        return registered
-    if usage:
-        return catalog.fallback_select_options(usage, types=types)
-    return []
+    _ = usage  # 兼容现有调用签名
+    return models_as_select_options(types=types)
 
 
 def get_default_model_id(usage: ModelUsage) -> str:
-    """某业务场景的默认模型 id（注册表首项优先，否则 catalog 默认值）。"""
+    """某业务场景的默认模型 id（仅从已注册且启用模型中选择）。"""
     type_filter: Optional[list[ModelType]] = None
     if usage == "finetune":
         type_filter = ["local"]
@@ -186,7 +182,7 @@ def get_default_model_id(usage: ModelUsage) -> str:
         if any(o["value"] == preferred for o in options):
             return preferred
         return options[0]["value"]
-    return catalog.resolve_default_model_id(usage)
+    return ""
 
 
 def _validate_model_item(item: dict[str, Any]) -> None:

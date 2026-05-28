@@ -5,20 +5,43 @@ from __future__ import annotations
 from typing import Any
 
 from app.config import model_catalog as catalog
+from app.services.distillation.storage import (
+    list_recent_finetune_datasets,
+    save_uploaded_finetune_jsonl,
+)
 from app.services import model_config_service
 
 
 def get_finetune_options() -> dict[str, Any]:
     from app.finetune.catalog import describe_finetune_dataset, finetune_output_base
 
+    # 基座模型仅来源于“已注册 + 已启用 + 本地部署”模型，不回退静态 catalog。
+    local_enabled_models = [
+        m for m in model_config_service.list_models(include_disabled=False) if m.get("type") == "local"
+    ]
+    base_model_options = [
+        {"label": f"{m.get('name', '')} [本地]", "value": str(m.get("id", ""))}
+        for m in local_enabled_models
+        if m.get("id")
+    ]
+
     defaults = dict(catalog.FINETUNE_DEFAULTS)
-    defaults["baseModel"] = model_config_service.get_default_model_id("finetune")
+    preferred = catalog.resolve_default_model_id("finetune")
+    if any(o["value"] == preferred for o in base_model_options):
+        defaults["baseModel"] = preferred
+    else:
+        defaults["baseModel"] = base_model_options[0]["value"] if base_model_options else ""
+    datasets = list_recent_finetune_datasets(limit=3)
+    default_dataset = datasets[0]["path"] if datasets else ""
+    defaults["trainingDatasetPath"] = default_dataset
 
     return {
-        "base_models": model_config_service.get_select_options(usage="finetune", types=["local"]),
+        "base_models": base_model_options,
         "learning_rates": catalog.FINETUNE_LEARNING_RATES,
         "defaults": defaults,
         "training_dataset": describe_finetune_dataset(),
+        "training_datasets": datasets,
+        "default_training_dataset": default_dataset,
         "finetune_output_dir": str(finetune_output_base()),
     }
 
@@ -30,6 +53,10 @@ def run_lora_finetune(config: dict[str, Any]) -> dict[str, Any]:
     from app.finetune.config import FineTuneParams
 
     return _run(FineTuneParams.from_request(config))
+
+
+def upload_training_dataset(filename: str, raw: bytes) -> dict[str, Any]:
+    return save_uploaded_finetune_jsonl(filename, raw)
 
 
 def publish_finetuned_model(

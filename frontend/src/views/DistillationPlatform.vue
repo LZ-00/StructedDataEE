@@ -52,6 +52,19 @@
                   :value="dataset.value"
                 />
               </el-select>
+              <div class="dataset-actions">
+                <el-upload
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  accept=".csv"
+                  :on-change="handleTrainingDatasetFileChange"
+                >
+                  <el-button size="small">上传训练 CSV</el-button>
+                </el-upload>
+                <el-button type="primary" link size="small" @click="handleDownloadTrainingTemplate">
+                  下载 CSV 模板
+                </el-button>
+              </div>
             </el-form-item>
 
             <!-- 指导指令输入 -->
@@ -128,6 +141,32 @@
                   :value="model.value"
                 />
               </el-select>
+            </el-form-item>
+
+            <el-form-item label="微调训练数据集 (Fine-tuning Dataset)" required>
+              <el-select
+                v-model="selectedFinetuneDatasetPath"
+                placeholder="请选择微调训练数据集"
+                style="width: 100%"
+                size="large"
+              >
+                <el-option
+                  v-for="item in finetuneDatasetOptions"
+                  :key="item.path"
+                  :label="formatFinetuneDatasetLabel(item)"
+                  :value="item.path"
+                />
+              </el-select>
+              <div class="dataset-actions">
+                <el-upload
+                  :auto-upload="false"
+                  :show-file-list="false"
+                  accept=".jsonl"
+                  :on-change="handleFinetuneDatasetFileChange"
+                >
+                  <el-button size="small">上传微调 JSONL</el-button>
+                </el-upload>
+              </div>
             </el-form-item>
 
             <!-- 超参数配置面板 -->
@@ -236,14 +275,10 @@
                 <span>启动 LoRA 微调训练 (Start Fine-tuning)</span>
               </el-button>
               <p v-if="trainingDatasetInfo?.filename" class="finetune-dataset-hint">
-                训练数据：{{ trainingDatasetInfo.filename }}
-                （{{ trainingDatasetInfo.sample_count }} 条）
-                <template v-if="trainingDatasetInfo.source === 'distillation_saved'">
-                  · 每次训练自动加载最新 finetune_*.jsonl
-                </template>
+                训练数据：{{ formatFinetuneDatasetLabel(trainingDatasetInfo) }}
               </p>
               <p v-else class="finetune-dataset-hint finetune-dataset-hint--warn">
-                请先在 CoT 校对界面保存微调数据集（finetune_*.jsonl）
+                请先选择或上传可用的微调 JSONL 数据集
               </p>
             </el-form-item>
 
@@ -515,7 +550,7 @@
         <el-form label-position="top" class="sample-editor-form">
           <el-row :gutter="16">
             <el-col :span="12">
-              <el-form-item label="工艺上下文 (Context)">
+            <el-form-item label="工艺上下文 (Context)">
                 <el-input
                   v-model="activeSample.context"
                   type="textarea"
@@ -527,14 +562,6 @@
             <el-col :span="12">
               <el-form-item label="Verified Score">
                 <el-input v-model="activeSample.verified_score" />
-              </el-form-item>
-              <el-form-item label="金标准 (Gold Standard)">
-                <el-input
-                  v-model="activeSample.gold_standard"
-                  type="textarea"
-                  :rows="2"
-                  resize="vertical"
-                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -562,6 +589,7 @@
 
     <template #footer>
       <div class="review-dialog-footer">
+        <el-button size="large" @click="handleDownloadCotDataset">下载 CoT 数据集</el-button>
         <el-button size="large" @click="handleReviewCancel">取消</el-button>
         <el-button
           type="primary"
@@ -578,7 +606,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, nextTick } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import {
   Promotion,
@@ -625,11 +653,11 @@ const trainingDatasets = ref<SelectOption[]>([])
 const baseModels = ref<SelectOption[]>([])
 const learningRates = ref<string[]>([])
 const trainingDatasetInfo = ref<FinetuneTrainingDataset | null>(null)
+const finetuneDatasetOptions = ref<FinetuneTrainingDataset[]>([])
+const selectedFinetuneDatasetPath = ref('')
 
 const canStartFinetune = computed(
-  () =>
-    Boolean(trainingDatasetInfo.value?.sample_count) &&
-    trainingDatasetInfo.value?.source === 'distillation_saved'
+  () => Boolean(selectedFinetuneDatasetPath.value) && Boolean(trainingDatasetInfo.value?.sample_count)
 )
 
 onMounted(async () => {
@@ -645,7 +673,13 @@ onMounted(async () => {
     teacherForm.instruction = distillOpts.default_instruction
     baseModels.value = finetuneOpts.base_models
     learningRates.value = finetuneOpts.learning_rates
-    trainingDatasetInfo.value = finetuneOpts.training_dataset ?? null
+    finetuneDatasetOptions.value = finetuneOpts.training_datasets ?? []
+    selectedFinetuneDatasetPath.value =
+      finetuneOpts.default_training_dataset || finetuneOpts.training_dataset?.path || ''
+    trainingDatasetInfo.value =
+      finetuneDatasetOptions.value.find((item) => item.path === selectedFinetuneDatasetPath.value) ??
+      finetuneOpts.training_dataset ??
+      null
     Object.assign(studentForm, finetuneOpts.defaults)
   } catch {
     ElMessage.warning('蒸馏平台配置加载失败，请确认已登录且后端服务已启动')
@@ -690,6 +724,42 @@ const activeSample = computed(() =>
   cotSamples.value.find((s) => s.id === activeSampleId.value) ?? null
 )
 
+watch(selectedFinetuneDatasetPath, (path) => {
+  const selected = finetuneDatasetOptions.value.find((item) => item.path === path)
+  if (selected) {
+    trainingDatasetInfo.value = selected
+  }
+})
+
+function formatFinetuneDatasetLabel(item: FinetuneTrainingDataset | null | undefined): string {
+  if (!item?.filename) return '未命名数据集'
+  const filename = item.filename
+  const stamp = filename.match(/(\d{8}_\d{6})/)
+  const stem = filename.replace(/\.(jsonl|csv)$/i, '')
+
+  const compactName = (raw: string): string => {
+    const cleaned = raw.replace(/^[\W_]+|[\W_]+$/g, '')
+    if (!cleaned) return '默认'
+    return cleaned.length > 18 ? `${cleaned.slice(0, 18)}…` : cleaned
+  }
+
+  if (filename.startsWith('finetune_upload_')) {
+    const namePart = stem
+      .replace(/^finetune_upload_/, '')
+      .replace(/_\d{8}_\d{6}$/, '')
+    const title = compactName(namePart)
+    return stamp ? `上传数据集 ${title} ${stamp[1]}` : `上传数据集 ${title}`
+  }
+  if (filename.startsWith('finetune_')) {
+    const namePart = stem
+      .replace(/^finetune_/, '')
+      .replace(/_\d{8}_\d{6}$/, '')
+    const title = compactName(namePart)
+    return stamp ? `蒸馏数据集 ${title} ${stamp[1]}` : `蒸馏数据集 ${title}`
+  }
+  return compactName(stem)
+}
+
 const training = ref(false)
 const trainingComplete = ref(false)
 const finetuneProgressVisible = ref(false)
@@ -718,7 +788,18 @@ function cloneSamples(samples: DistillationCotSample[]): DistillationCotSample[]
 async function refreshTrainingDatasetInfo() {
   try {
     const finetuneOpts = await finetuneService.getOptions()
-    trainingDatasetInfo.value = finetuneOpts.training_dataset ?? null
+    finetuneDatasetOptions.value = finetuneOpts.training_datasets ?? []
+    if (
+      !selectedFinetuneDatasetPath.value &&
+      (finetuneOpts.default_training_dataset || finetuneOpts.training_dataset?.path)
+    ) {
+      selectedFinetuneDatasetPath.value =
+        finetuneOpts.default_training_dataset || finetuneOpts.training_dataset?.path || ''
+    }
+    const selected = finetuneDatasetOptions.value.find(
+      (item) => item.path === selectedFinetuneDatasetPath.value
+    )
+    trainingDatasetInfo.value = selected ?? finetuneOpts.training_dataset ?? null
   } catch {
     /* 忽略刷新失败 */
   }
@@ -768,6 +849,41 @@ function handleReviewCancel() {
   reviewDialogVisible.value = false
 }
 
+function handleDownloadCotDataset() {
+  if (!cotSamples.value.length) {
+    ElMessage.warning('暂无可下载的 CoT 数据')
+    return
+  }
+  const lines = cotSamples.value.map((s) =>
+    JSON.stringify(
+      {
+        id: s.id,
+        context: s.context,
+        ai_prediction: s.ai_prediction,
+        verified_score: s.verified_score,
+        cot_trace: s.cot_trace
+      },
+      null,
+      0
+    )
+  )
+  const blob = new Blob([`${lines.join('\n')}\n`], { type: 'application/jsonl;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const ts = new Date()
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\..+/, '')
+  const filename = `cot_edited_${teacherForm.trainingDataset || 'dataset'}_${ts}.jsonl`
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
+  ElMessage.success('CoT 数据集已下载')
+}
+
 async function handleSaveDataset() {
   if (!cotSamples.value.length) {
     ElMessage.warning('暂无可保存的样本数据')
@@ -787,7 +903,6 @@ async function handleSaveDataset() {
       samples: cotSamples.value.map((s) => ({
         id: s.id,
         context: s.context,
-        goldStandard: s.gold_standard,
         aiPrediction: s.ai_prediction,
         verifiedScore: s.verified_score,
         cotTrace: s.cot_trace
@@ -800,6 +915,50 @@ async function handleSaveDataset() {
     ElMessage.error('保存失败，请确认后端服务已启动')
   } finally {
     saving.value = false
+  }
+}
+
+async function handleTrainingDatasetFileChange(uploadFile: any) {
+  const rawFile = uploadFile?.raw as File | undefined
+  if (!rawFile) return
+  try {
+    const uploaded = await distillationService.uploadTrainingDataset(rawFile)
+    const options = await distillationService.getOptions()
+    trainingDatasets.value = options.training_datasets
+    teacherForm.trainingDataset = uploaded.dataset.value || teacherForm.trainingDataset
+    ElMessage.success('训练 CSV 上传成功')
+  } catch {
+    ElMessage.error('训练 CSV 上传失败，请检查表头格式')
+  }
+}
+
+async function handleDownloadTrainingTemplate() {
+  try {
+    const blob = await distillationService.downloadTrainingTemplate()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'distillation_template.csv'
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  } catch {
+    ElMessage.error('模板下载失败')
+  }
+}
+
+async function handleFinetuneDatasetFileChange(uploadFile: any) {
+  const rawFile = uploadFile?.raw as File | undefined
+  if (!rawFile) return
+  try {
+    const res = await finetuneService.uploadTrainingDataset(rawFile)
+    await refreshTrainingDatasetInfo()
+    selectedFinetuneDatasetPath.value = res.dataset.path
+    trainingDatasetInfo.value = res.dataset
+    ElMessage.success(res.message || '微调数据上传成功')
+  } catch {
+    ElMessage.error('微调 JSONL 上传失败，请检查字段 Instruction/Input/Output')
   }
 }
 
@@ -1014,14 +1173,18 @@ const handleStartFineTuning = async () => {
     return
   }
   await refreshTrainingDatasetInfo()
-  if (trainingDatasetInfo.value?.source !== 'distillation_saved') {
-    ElMessage.warning('请先在「查看并校对」中保存微调数据集（finetune_*.jsonl）')
+  if (!selectedFinetuneDatasetPath.value) {
+    ElMessage.warning('请先选择微调训练数据集')
     return
   }
-  if (!trainingDatasetInfo.value.sample_count) {
+  const selected = finetuneDatasetOptions.value.find(
+    (item) => item.path === selectedFinetuneDatasetPath.value
+  )
+  if (!selected?.sample_count) {
     ElMessage.warning('微调数据集为空，请重新保存校对结果')
     return
   }
+  trainingDatasetInfo.value = selected
 
   training.value = true
   trainingComplete.value = false
@@ -1037,12 +1200,12 @@ const handleStartFineTuning = async () => {
   appendFinetuneLog({
     time: '',
     level: 'INFO',
-    message: `>>> 将使用最新训练数据: ${trainingDatasetInfo.value.filename}（${trainingDatasetInfo.value.sample_count} 条）`
+    message: `>>> 将使用训练数据: ${formatFinetuneDatasetLabel(trainingDatasetInfo.value)}`
   })
 
   try {
     const res = await finetuneService.runFineTuningStream(
-      { ...studentForm },
+      { ...studentForm, trainingDatasetPath: selectedFinetuneDatasetPath.value },
       {
         onStepInit: (steps) => {
           finetuneSteps.value = steps.map((s) => ({
@@ -1246,6 +1409,13 @@ const handleStartFineTuning = async () => {
 
 .distillation-form :deep(.el-form-item) {
   margin-bottom: 20px;
+}
+
+.dataset-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 .distillation-form :deep(.el-form-item__label) {

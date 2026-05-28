@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -16,6 +16,7 @@ def options(_user: str = Depends(get_current_user)) -> dict:
 
 class FineTuneRequest(BaseModel):
     base_model: str = Field(..., alias="baseModel")
+    training_dataset_path: str = Field("", alias="trainingDatasetPath")
     lora_rank: int = Field(64, alias="loraRank")
     lora_alpha: int = Field(128, alias="loraAlpha")
     lora_dropout: float = Field(0.05, alias="loraDropout")
@@ -63,3 +64,15 @@ def publish(body: PublishRequest, _user: str = Depends(get_current_user)) -> dic
             base_model_registry_id=body.base_model,
         )
     return finetune_service.publish_model(body.model_name)
+
+
+@router.post("/upload-training-dataset")
+async def upload_training_dataset(
+    file: UploadFile = File(...),
+    _user: str = Depends(get_current_user),
+) -> dict:
+    raw = await file.read()
+    try:
+        return finetune_service.upload_training_dataset(file.filename or "finetune.jsonl", raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc

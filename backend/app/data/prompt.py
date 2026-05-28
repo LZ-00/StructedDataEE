@@ -124,6 +124,39 @@ def get_evaluation_instruction() -> str:
     return EVALUATION_INSTRUCTION.strip()
 
 
+COT_DISTILLATION_INSTRUCTION_TEMPLATE = """[System Persona & Objective]
+You are an expert laser welding process engineer and a rigorous extraction quality auditor. Your objective is to synthesize a concise and logically consistent Chain-of-Thought (CoT) reasoning trace that justifies a pre-verified evaluation score for a laser welding structured data extraction task.
+
+[Core Constraint: Context-Grounded Verification]
+The [Context] is the only evidence source. Evaluate only the non-null field-value pairs in the [AI Prediction]. A predicted relation is correct only if its field, value, unit, and association with the corresponding welding experimental record are explicitly supported by the [Context]. Do not use external knowledge, do not infer missing values, and do not penalize omitted information. Null fields are not counted as predicted relations.
+
+[Context-Grounded Verification Rules]
+Accept only meaning-preserving lexical and unit variants when they are directly supported by the [Context], such as “Ar” ≡ “argon” and “2.8 kW” ≡ “2800 W”. Reject unsupported values, inferred values, wrong units, mismatched entities, and incorrect associations between welding process parameters and mechanical performance metrics. A mechanical property is correct only when it is linked to the same sample, condition, or experimental record as the corresponding welding parameters.
+
+[Deterministic CoT Algorithm]
+Given the [Context], [AI Prediction], and the [Verified Score], synthesize the CoT reasoning trace strictly following this 4-step state machine:
+- Step 1 (Parsing): Parse each non-null predicted field-value pair from the [AI Prediction], grouped by experimental record.
+- Step 2 (Evidence Verification): Check whether each predicted field-value pair is explicitly supported by the [Context], allowing only meaning-preserving lexical or unit normalization. Ensure that the verification logic is consistent with the provided [Verified Score].
+- Step 3 (Relation Diagnosis): Classify each predicted relation as 'Correct' or 'Incorrect' based on value accuracy, unit consistency, explicit contextual support, and correct association with the corresponding welding experimental record.
+- Step 4 (Score Reconciliation): Explain how the number of correctly supported predictions and the total number of non-null predicted relations correspond to the [Verified Score].
+
+[Input Data]
+Context: {passage}
+AI Prediction: {ai_predictions}
+
+### Verified Evaluation Score ###
+correctly_predicted_relations: {true_correct}
+total_predicted_relations: {true_total}
+
+[Format Specification]
+Output your reasoning trace as a SINGLE, CONTINUOUS TEXT PARAGRAPH. Explicitly begin each logical transition with its identifier ("Step 1:", "Step 2:", "Step 3:", "Step 4:"). Exclude all JSON formatting, markdown elements, numeric score summaries outside the reasoning text, greetings, and conversational fillers. Your entire output must consist solely of the sequential textual justification."""
+
+
+def get_distillation_instruction_template() -> str:
+    """思维链蒸馏页面指导指令默认模板。"""
+    return COT_DISTILLATION_INSTRUCTION_TEMPLATE.strip()
+
+
 def build_evaluation_input(*, passage: str, ai_prediction: str) -> str:
     """评估推理用 Input（仅 Context 与 AI Prediction，不含标准分数）。"""
     return (

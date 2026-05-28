@@ -69,7 +69,7 @@ def run_lora_finetune(
         from app.finetune.demo_pipeline import run_demo_finetune
 
         data_info = ft_catalog.describe_finetune_dataset()
-        data_path = ft_catalog.resolve_finetune_dataset_path()
+        data_path = ft_catalog.resolve_finetune_dataset_path(params.training_dataset_path)
         if not data_path.is_file():
             raise FileNotFoundError(
                 "未找到微调数据：请先在 CoT 校对界面保存，生成 finetune_*.jsonl"
@@ -90,7 +90,7 @@ def run_lora_finetune(
     _step(emit, 0, "process")
     _log(emit, "[Step 1/5] 准备训练数据")
     data_info = ft_catalog.describe_finetune_dataset()
-    data_path = ft_catalog.resolve_finetune_dataset_path()
+    data_path = ft_catalog.resolve_finetune_dataset_path(params.training_dataset_path)
     if not data_path.is_file():
         raise FileNotFoundError(
             "未找到微调数据：请先在 CoT 校对界面保存，生成 finetune_*.jsonl"

@@ -1,36 +1,39 @@
-"""思维链蒸馏数据构建业务逻辑。"""
+"""蒸馏业务门面。"""
 
 from __future__ import annotations
 
 import json
 import re
-from pathlib import Path
 from typing import Any
 
 from app.config import distillation_catalog as distill_cfg
+from app.data.prompt import get_distillation_instruction_template
 from app.finetune import catalog as ft_catalog
 from app.services import model_config_service
+from app.services.distillation import generation
+from app.services.distillation.storage import (
+    build_training_dataset_options,
+    dataset_file_slug,
+    list_recent_finetune_datasets,
+    prune_finetune_datasets,
+    resolve_training_dataset_path,
+    save_uploaded_training_csv,
+    training_template_csv,
+)
 
-_INSTRUCTION_PATH = Path(__file__).with_name("distillation_default_instruction.txt")
-_LP_PARAM_DATASET = distill_cfg.LP_PARAM_DATASET_ID
 _SCORE_JSON_RE = re.compile(
     r'\{\s*"correctly_predicted_relations"\s*:\s*\d+\s*,\s*"total_predicted_relations"\s*:\s*\d+\s*\}\s*$'
 )
 
 
-def _default_instruction() -> str:
-    if _INSTRUCTION_PATH.is_file():
-        return _INSTRUCTION_PATH.read_text(encoding="utf-8")
-    return ""
+def default_instruction() -> str:
+    return get_distillation_instruction_template()
 
 
 def _finetune_instruction_text() -> str:
     if ft_catalog.INSTRUCTION_FILE.is_file():
         return ft_catalog.INSTRUCTION_FILE.read_text(encoding="utf-8").strip()
-    return _default_instruction().strip() or (
-        "You are an expert laser welding process engineer. "
-        "Synthesize a CoT trace that justifies the verified score."
-    )
+    return default_instruction().strip()
 
 
 def _parse_verified_score(score: str) -> tuple[int, int]:
@@ -49,9 +52,8 @@ def _build_finetune_input(sample: dict[str, Any]) -> str:
         "[Task Description]\n"
         "Evaluate welding relation extraction.\n\n"
         f"[Context]\n{sample.get('context', '')}\n\n"
-        f"[Gold Standard]\n{sample.get('gold_standard', '')}\n\n"
         f"[AI Prediction]\n{sample.get('ai_prediction', '')}\n\n"
-        "### True Evaluation Score (Must Justify This) ###\n"
+        "### Verified Evaluation Score ###\n"
         f"correctly_predicted_relations: {correct}\n"
         f"total_predicted_relations: {total}"
     )
@@ -80,18 +82,15 @@ def _sample_to_finetune_record(sample: dict[str, Any]) -> dict[str, str]:
 
 
 def get_distillation_options() -> dict[str, Any]:
-    datasets = [
-        {"label": meta["label"], "value": ds_id}
-        for ds_id, meta in distill_cfg.TRAINING_DATASETS.items()
-    ]
+    datasets, default_dataset = build_training_dataset_options()
     return {
         "teacher_models": model_config_service.get_select_options(
             usage="distillation_teacher",
             types=["api"],
         ),
         "training_datasets": datasets,
-        "default_training_dataset": _LP_PARAM_DATASET,
-        "default_instruction": _default_instruction(),
+        "default_training_dataset": default_dataset,
+        "default_instruction": default_instruction(),
     }
 
 
@@ -100,10 +99,33 @@ def generate_distillation_dataset(
     training_dataset: str,
     instruction: str,
 ) -> dict[str, Any]:
-    """生成蒸馏用 CoT 轨迹（同步，无 SSE）。"""
-    from app.services.distillation_generation import run_generation
+    return generation.run_generation(teacher_model, training_dataset, instruction)
 
-    return run_generation(teacher_model, training_dataset, instruction)
+
+def upload_training_dataset(filename: str, raw: bytes) -> dict[str, Any]:
+    meta = save_uploaded_training_csv(filename, raw)
+    return {
+        "success": True,
+        "dataset": {
+            "value": meta.dataset_id,
+            "label": meta.label,
+            "path": str(meta.path),
+            "modified_at": meta.modified_at,
+        },
+        "message": "训练数据集上传成功",
+    }
+
+
+def training_dataset_template_content() -> str:
+    return training_template_csv()
+
+
+def list_recent_finetune_records() -> dict[str, Any]:
+    datasets = list_recent_finetune_datasets(limit=3)
+    return {
+        "success": True,
+        "datasets": datasets,
+    }
 
 
 def save_distillation_finetune_dataset(
@@ -111,16 +133,14 @@ def save_distillation_finetune_dataset(
     training_dataset: str,
     samples: list[dict[str, Any]],
 ) -> dict[str, Any]:
-    """保存用户校对后的 CoT 样本为 LoRA 微调 JSONL。"""
     if not samples:
         raise ValueError("保存样本列表不能为空")
-    if training_dataset not in distill_cfg.TRAINING_DATASETS:
-        raise ValueError(f"不支持的数据集: {training_dataset}")
+    _ = resolve_training_dataset_path(training_dataset)
 
     run_timestamp = distill_cfg.generation_timestamp_slug()
-    out_path = distill_cfg.finetune_output_jsonl(
-        training_dataset, teacher_model, run_timestamp=run_timestamp
-    )
+    safe_teacher = teacher_model.replace("/", "_").replace(".", "_")
+    safe_dataset = dataset_file_slug(training_dataset)
+    out_path = distill_cfg.OUTPUT_DIR / f"finetune_{safe_dataset}_{safe_teacher}_{run_timestamp}.jsonl"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     records: list[dict[str, str]] = []
@@ -135,6 +155,7 @@ def save_distillation_finetune_dataset(
         for record in records:
             f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
+    removed = prune_finetune_datasets(limit=3)
     return {
         "success": True,
         "saved_count": len(records),
@@ -143,5 +164,19 @@ def save_distillation_finetune_dataset(
         "training_dataset": training_dataset,
         "save_path": str(out_path),
         "run_timestamp": run_timestamp,
-        "message": f"已保存 {len(records)} 条校对数据至 {out_path.name}，可用于 LoRA 微调",
+        "removed_records": removed,
+        "message": f"已保存 {len(records)} 条校对数据，当前保留最新 3 条微调数据",
     }
+
+
+def request_cancel_event():
+    return generation.request_cancel_event()
+
+
+def iter_sse_lines(teacher_model: str, training_dataset: str, instruction: str, *, cancel_event=None):
+    return generation.iter_sse_lines(
+        teacher_model,
+        training_dataset,
+        instruction,
+        cancel_event=cancel_event,
+    )

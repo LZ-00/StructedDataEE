@@ -7,6 +7,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from app.services.distillation.storage import list_recent_finetune_datasets
 from app.timezone_utils import ASIA_SHANGHAI
 
 _DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "finetune"
@@ -64,18 +65,11 @@ def list_finetune_jsonl_candidates() -> list[Path]:
 
 def describe_finetune_dataset() -> dict[str, Any]:
     """描述本次微调将使用的数据集（供 options 与训练日志）。"""
-    candidates = list_finetune_jsonl_candidates()
-    if candidates:
-        path = candidates[0]
-        mtime = path.stat().st_mtime
-        return {
-            "path": str(path.resolve()),
-            "filename": path.name,
-            "source": "distillation_saved",
-            "sample_count": _count_jsonl_lines(path),
-            "modified_at": datetime.fromtimestamp(mtime, tz=ASIA_SHANGHAI).isoformat(),
-            "candidate_count": len(candidates),
-        }
+    recent = list_recent_finetune_datasets(limit=3)
+    if recent:
+        first = dict(recent[0])
+        first["candidate_count"] = len(list_finetune_jsonl_candidates())
+        return first
 
     if BUNDLED_DATASET.is_file():
         mtime = BUNDLED_DATASET.stat().st_mtime
@@ -111,8 +105,13 @@ def describe_finetune_dataset() -> dict[str, Any]:
     }
 
 
-def resolve_finetune_dataset_path() -> Path:
+def resolve_finetune_dataset_path(training_dataset_path: str = "") -> Path:
     """每次训练调用：优先使用修改时间最新的 finetune_*.jsonl。"""
+    if training_dataset_path:
+        selected = Path(training_dataset_path)
+        if selected.is_file():
+            return selected
+        raise FileNotFoundError(f"指定训练数据不存在: {training_dataset_path}")
     info = describe_finetune_dataset()
     path_str = info.get("path") or ""
     if path_str:

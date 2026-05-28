@@ -1,20 +1,19 @@
 import asyncio
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.api.deps import get_current_user
-from app.services import distillation_service
-from app.services import distillation_generation as distill_gen
+from app.services import distillation
 
 router = APIRouter()
 
 
 @router.get("/options")
 def options(_user: str = Depends(get_current_user)) -> dict:
-    return distillation_service.get_distillation_options()
+    return distillation.get_distillation_options()
 
 
 class DistillationGenerateRequest(BaseModel):
@@ -28,7 +27,6 @@ class DistillationGenerateRequest(BaseModel):
 class DistillationSamplePayload(BaseModel):
     id: int
     context: str = ""
-    gold_standard: str = Field("", alias="goldStandard")
     ai_prediction: str = Field("", alias="aiPrediction")
     verified_score: str = Field("", alias="verifiedScore")
     cot_trace: str = Field("", alias="cotTrace")
@@ -46,7 +44,7 @@ class DistillationSaveRequest(BaseModel):
 
 @router.post("/generate-dataset")
 def generate_dataset(body: DistillationGenerateRequest, _user: str = Depends(get_current_user)) -> dict:
-    return distillation_service.generate_distillation_dataset(
+    return distillation.generate_distillation_dataset(
         body.teacher_model,
         body.training_dataset,
         body.instruction,
@@ -60,10 +58,10 @@ async def generate_dataset_stream(
     _user: str = Depends(get_current_user),
 ) -> StreamingResponse:
     """SSE 流式返回 CoT 生成步骤与日志；客户端断开或中止时停止后台生成。"""
-    cancel_event = distill_gen.request_cancel_event()
+    cancel_event = distillation.request_cancel_event()
 
     async def event_stream():
-        sync_gen = distill_gen.iter_sse_lines(
+        sync_gen = distillation.iter_sse_lines(
             body.teacher_model,
             body.training_dataset,
             body.instruction,
@@ -100,8 +98,35 @@ async def generate_dataset_stream(
 @router.post("/save-dataset")
 def save_dataset(body: DistillationSaveRequest, _user: str = Depends(get_current_user)) -> dict:
     payload: list[dict[str, Any]] = [s.model_dump(by_alias=False) for s in body.samples]
-    return distillation_service.save_distillation_finetune_dataset(
+    return distillation.save_distillation_finetune_dataset(
         body.teacher_model,
         body.training_dataset,
         payload,
     )
+
+
+@router.post("/upload-training-dataset")
+async def upload_training_dataset(
+    file: UploadFile = File(...),
+    _user: str = Depends(get_current_user),
+) -> dict:
+    raw = await file.read()
+    try:
+        return distillation.upload_training_dataset(file.filename or "dataset.csv", raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/training-dataset-template")
+def training_dataset_template(_user: str = Depends(get_current_user)) -> Response:
+    content = distillation.training_dataset_template_content()
+    return Response(
+        content=content,
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": 'attachment; filename="distillation_template.csv"'},
+    )
+
+
+@router.get("/finetune-datasets")
+def list_finetune_datasets(_user: str = Depends(get_current_user)) -> dict:
+    return distillation.list_recent_finetune_records()

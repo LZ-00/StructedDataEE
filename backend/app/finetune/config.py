@@ -9,6 +9,7 @@ from typing import Any
 @dataclass
 class FineTuneParams:
     base_model_registry_id: str
+    training_dataset_path: str = ""
     lora_r: int = 64
     lora_alpha: int = 128
     lora_dropout: float = 0.05
@@ -29,6 +30,9 @@ class FineTuneParams:
         return cls(
             base_model_registry_id=str(
                 body.get("baseModel") or body.get("base_model") or ""
+            ).strip(),
+            training_dataset_path=str(
+                body.get("trainingDatasetPath") or body.get("training_dataset_path") or ""
             ).strip(),
             lora_r=int(body.get("loraRank") or body.get("lora_r") or 64),
             lora_alpha=int(body.get("loraAlpha") or body.get("lora_alpha") or 128),

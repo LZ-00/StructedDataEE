@@ -9,7 +9,8 @@ from typing import Any, Optional
 from app.config import distillation_catalog as distill_cfg
 from app.config import evaluation_catalog as eval_cfg
 from app.schemas.extraction import PipelineDefaults
-from app.services import cot_generation_service, model_config_service
+from app.services import model_config_service
+from app.services.distillation import cot_generator
 from app.services.extraction import pipeline
 from app.services.extraction.document_loader import load_document
 
@@ -29,7 +30,7 @@ def _load_en_passages() -> list[str]:
 def _load_lp_param_samples() -> list[dict[str, str]]:
     """与 lp_param_bank.csv / lp_param_benchmark.jsonl 对齐的英文样本列表。"""
     csv_path = distill_cfg.dataset_csv_path(eval_cfg.LP_PARAM_BENCHMARK_ID)
-    rows = cot_generation_service.load_csv_rows(csv_path)
+    rows = cot_generator.load_csv_rows(csv_path)
     en_passages = _load_en_passages()
     samples: list[dict[str, str]] = []
     for idx, row in enumerate(rows):
@@ -38,7 +39,6 @@ def _load_lp_param_samples() -> list[dict[str, str]]:
             {
                 "passage": passage_en,
                 "passage_zh": row.get("passage", ""),
-                "gold_relations": row.get("gold_relations", ""),
                 "ai_predicted_relations": row.get("ai_predicted_relations", ""),
             }
         )

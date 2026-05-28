@@ -3,6 +3,7 @@ import type {
   DistillationCotSample,
   DistillationGenerateResponse,
   DistillationOptions,
+  FinetuneTrainingDataset,
   FinetuneOptions
 } from '@/types/api'
 
@@ -146,13 +147,40 @@ export const distillationService = {
     samples: Array<{
       id: number
       context: string
-      goldStandard: string
       aiPrediction: string
       verifiedScore: string
       cotTrace: string
     }>
   }): Promise<{ success: boolean; message: string; save_path?: string; saved_count?: number }> {
     return apiClient.post('/distillation/save-dataset', body)
+  },
+
+  uploadTrainingDataset(file: File): Promise<{
+    success: boolean
+    message: string
+    dataset: { value: string; label: string; path: string; modified_at: string }
+  }> {
+    const form = new FormData()
+    form.append('file', file)
+    return apiClient.post('/distillation/upload-training-dataset', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+  },
+
+  listFinetuneDatasets(): Promise<{ success: boolean; datasets: FinetuneTrainingDataset[] }> {
+    return apiClient.get('/distillation/finetune-datasets')
+  },
+
+  async downloadTrainingTemplate(): Promise<Blob> {
+    const token = sessionStorage.getItem(AUTH_TOKEN_KEY)
+    const res = await fetch(`${apiBaseUrl()}/distillation/training-dataset-template`, {
+      method: 'GET',
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+    if (!res.ok) {
+      throw new Error(`模板下载失败 HTTP ${res.status}`)
+    }
+    return res.blob()
   }
 }
 
@@ -280,6 +308,20 @@ export const finetuneService = {
       modelName,
       checkpoint: extra?.checkpoint,
       baseModel: extra?.baseModel
+    })
+  },
+
+  uploadTrainingDataset(file: File): Promise<{
+    success: boolean
+    message: string
+    dataset: FinetuneTrainingDataset
+    sample_count: number
+    removed: string[]
+  }> {
+    const form = new FormData()
+    form.append('file', file)
+    return apiClient.post('/finetune/upload-training-dataset', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     })
   }
 }
