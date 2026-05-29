@@ -36,6 +36,8 @@ if command -v hostname >/dev/null 2>&1; then
 fi
 echo "  若你在自己电脑浏览器打开 127.0.0.1:${PORT} 出现 ERR_CONNECTION_REFUSED，"
 echo "  说明需先在 Cursor/VS Code「端口」面板转发 ${PORT}，或改用上面的局域网 IP。"
+echo "  若本地出现随机端口（如 57426）而不是 ${PORT}，通常是本地 ${PORT} 已占用；"
+echo "  请在本地释放 ${PORT} 占用后重新转发，或在端口面板将 Local Address 手动改为 ${PORT}。"
 echo "  后端 API 代理目标: ${API_TARGET}"
 echo "----------------------------------------"
 

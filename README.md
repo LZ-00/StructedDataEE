@@ -38,12 +38,26 @@ npm run dev:frontend
 ### 1) 构建并启动（CPU）
 
 ```bash
+# 可选：先准备 Docker 环境变量
+cp .env.docker.example .env
+
 docker compose up -d --build
 ```
 
 访问地址：
 - 前端：`http://<host>:3000`
 - 后端健康检查：`http://<host>:8000/api/health`
+
+端口映射默认与开发模式一致（`3000/8000`）。若宿主机端口冲突，可在 `.env` 中修改：
+
+```env
+FRONTEND_PORT=3001
+BACKEND_PORT=8001
+```
+
+也可通过 `FRONTEND_BIND_HOST` / `BACKEND_BIND_HOST` 控制监听地址：
+- `0.0.0.0`：允许局域网访问
+- `127.0.0.1`：仅本机访问
 
 ### 2) 启用 GPU（可选）
 

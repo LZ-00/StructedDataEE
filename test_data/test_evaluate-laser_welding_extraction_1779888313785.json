@@ -1,0 +1,48 @@
+{
+  "export_meta": {
+    "schema_version": "laser-welding-v1",
+    "exported_at": "2026-05-27T13:25:13.781Z",
+    "task_type": "laser_welding_extraction",
+    "task_description": "Identify each laser welding experimental record in the following passage. For each record, extract the welding process parameters, including welding power (W), welding speed (m/min), defocusing distance (mm), shielding gas, and shielding gas flow rate(L/min), together with the corresponding mechanical performance metrics, including tensile strength, yield strength, and elongation rate (%). Only extract information explicitly stated in the passage.",
+    "model": "7ad89eb3-425c-41eb-bbde-d709c4b2699b",
+    "source_filename": null
+  },
+  "summary": {
+    "total_chars": 544,
+    "chunk_count": 1,
+    "relevant_chunk_count": 1,
+    "extracted_record_count": 1,
+    "merged_record_count": 0,
+    "unmatched_record_count": 0,
+    "warning_count": 0
+  },
+  "warnings": [],
+  "experimental_records": [
+    {
+      "record_id": "R001",
+      "association_status": "paired",
+      "source_chunk_ids": [
+        "c-001"
+      ],
+      "merge_note": null,
+      "welding_parameters": {
+        "welding_power": "2800 W",
+        "welding_speed": "1.2 m/min",
+        "defocusing_distance": "0 mm",
+        "shielding_gas": "Argon",
+        "shielding_gas_flow_rate": "20 L/min"
+      },
+      "mechanical_performance": {
+        "tensile_strength": "286 MPa",
+        "yield_strength": "175 MPa",
+        "elongation_rate": "7.8%"
+      },
+      "source": {
+        "chunk_id": "c-001",
+        "chunk": "Laser wire-filled welding of thin aluminum alloy sheet was performed using a welding power of 2800 W, a welding speed of 1.2 m/min, and a defocusing distance of 0 mm.\nArgon was used as the shielding gas at a shielding gas flow rate of 20 L/min.\nUnder these welding conditions, the welded joint exhibited a tensile strength of 286 MPa, a yield strength of 175 MPa, and an elongation rate of 7.8%.\nPorosity defects were observed in the weld bead, suggesting that the selected welding parameters and shielding condition affected the joint quality.",
+        "relevance_reason": "The chunk explicitly states all required welding parameters (power, speed, defocusing distance, shielding gas, flow rate) and mechanical performance metrics (tensile strength, yield strength, elongation rate) for a laser welding experimental record.",
+        "excerpt": "Laser wire-filled welding of thin aluminum alloy sheet was performed using a welding power of 2800 W, a welding speed of 1.2 m/min, and a defocusing distance of 0 mm. Argon was used as the shielding gas at a shielding gas flow rate of 20 L/..."
+      }
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "export_meta": {
+    "schema_version": "laser-welding-v1",
+    "exported_at": "2026-05-27T14:54:36.008Z",
+    "task_type": "laser_welding_extraction",
+    "task_description": "Identify each laser welding experimental record in the following passage. For each record, extract the welding process parameters, including welding power (W), welding speed (m/min), defocusing distance (mm), shielding gas, and shielding gas flow rate(L/min), together with the corresponding mechanical performance metrics, including tensile strength, yield strength, and elongation rate (%). Only extract information explicitly stated in the passage.",
+    "model": "52e78774-0fc3-4bfd-a066-35e673ceef54",
+    "source_filename": "Microstructure and mechanical properties of laser welded Ti-6Al-4V (TC4)xxx.pdf"
+  },
+  "summary": {
+    "total_chars": 41778,
+    "chunk_count": 15,
+    "relevant_chunk_count": 7,
+    "extracted_record_count": 14,
+    "merged_record_count": 0,
+    "unmatched_record_count": 4,
+    "warning_count": 0
+  },
+  "warnings": [],
+  "experimental_records": [
+    {
+      "record_id": "R001",
+      "association_status": "paired",
+      "source_chunk_ids": [
+        "c-001"
+      ],
+      "merge_note": null,
+      "welding_parameters": {
+        "welding_power": "2.3 kW",
+        "welding_speed": "0.04 m/s",
+        "defocusing_distance": "0 mm",
+        "shielding_gas": null,
+        "shielding_gas_flow_rate": null
+      },
+      "mechanical_performance": {
+        "tensile_strength": "985 MPa",
+        "yield_strength": null,
+        "elongation_rate": null
+      },
+      "source": {
+        "chunk_id": "c-001",
+        "chunk": "Optics & Laser Technology 170 (2024) 110320\nAvailable online 10 November 2023\n0030-3992/© 2023 Elsevier Ltd.\nAll rights reserved.\nFull length article\nMicrostructure and mechanical properties of laser welded Ti-6Al-4V (TC4)\ntitanium alloy joints\nGuowei Li, Yinshuang Wang, Yahong Liang\n, Pengxiang Gao, Xinyu Liu, Wencai Xu, Dawei Yang\nSchool of Materials Science and Engineering, Inner Mongolia University of Technology, Hohhot 010051, China\nARTICLE INFO\nKeywords:\nLaser beam welding\nTC4 titanium alloy\nMicrostructure\nMechanical properties\nABSTRACT\nLaser beam welding (LBW) was applied to join 3 mm thick TC4 titanium alloy plates in this study.\nThree-factor\nand three-level orthogonal experiments were designed to choose the best welding parameters through the\nanalysis of range and variance.\nThe microstructures of the welded joints were analyzed by optical microscopy\n(OM), scanning electron microscopy (SEM) and electron backscatter diffraction (EBSD).\nThe mechanical prop -\nerties of the welded joints were analyzed by tensile tests.\nThe experimental results indicated that the defocused\nposition had the largest effect, followed by the laser power and welding speed.\nThe optimal welding parameters\nwere laser power 2.3 kW, welding speed 0.04 m/s and defocused position 0 mm.\nThe heat-affected zone (HAZ)\nconsisted of α ′ martensite, primary α phase ( α\n) and primary β phase ( β\n).\nIn the fusion zone (FZ), the acicular α ′\nmartensite was distributed in the β columnar grains.\nThe tensile strength of the laser welded joint under the\noptimal welding parameters was 985 MPa, which is less than that of the base metal (BM).\nThe peak value of the\ngrain misorientation angle in the HAZ was related to the amount of martensite.\nThe laser welded joints with finer\nmartensite and equiaxed α + β would have better mechanical properties.\nThe grains in the HAZ had a preferred\norientation in the {0 0 1} direction.\n1. Introduction\nTitanium and its alloys became crucial engineering structural ma -\nterials in the 1950s.\nThe usage of titanium and its alloys is now wide -\nspread in the domains of medicine, aerospace, biomaterials,\nbiomedicine and marine engineering due to their low density, high\nstrength-to-weight ratio, excellent resistance to corrosion, fine resis -\ntance to plastic deformation, and low-temperature brittleness [1 – 4] .\nWith the rapid development of the titanium industry, processes for\nwelding titanium alloy have developed swiftly in recent decades to\nlower welding costs while enhancing weld stability, quality and effi -\nciency [5,6] .\nCommonly used welding methods for titanium alloys include tung -\nsten inert gas (TIG) welding, brazing, electron beam welding (EBW),\nLBW and other welding methods.\nEvery welding technique has advan -\ntages and disadvantages.\nDue to its low weld strength and production\nefficiency, brazing cannot meet the welding requirements of large-scale\nmachines.\nNonetheless, the residual stress and deformation can be\nimproved during brazing and precision forming of the complex parts can\nbe achieved [7] .\nLiu et al.\n[8] investigated the brazing of ZrO\nceramic to\nTC4 titanium alloy.",
+        "relevance_reason": "包含激光焊接实验记录的关键参数：焊接功率2.3 kW、焊接速度0.04 m/s、离焦量0 mm，以及抗拉强度985 MPa，符合提取目标。",
+        "excerpt": "Optics & Laser Technology 170 (2024) 110320 Available online 10 November 2023 0030-3992/© 2023 Elsevier Ltd. All rights reserved. Full length article Microstructure and mechanical properties of laser welded Ti-6Al-4V (TC4) titanium alloy jo..."
+      }
+    },
+    {
+      "record_id": "R002",
+      "association_status": "partial",
+      "source_chunk_ids": [
+        "c-002"
+      ],
+      "merge_note": "unmatched process parameters",
+      "welding_parameters": {
+        "welding_power": null,
+        "welding_speed": "2.5 m/min",
+        "defocusing_distance": null,
+        "shielding_gas": null,
+        "shielding_gas_flow_rate": null
+      },
+      "mechanical_performance": {
+        "tensile_strength": null,
+        "yield_strength": null,
+        "elongation_rate": null
+      },
+      "source": {
+        "chunk_id": "c-002",
+        "chunk": "They found that amorphous brazing could reduce\nresidual stress and improve the mechanical properties of welded joints.\nEBW is performed under vacuum conditions, which can protect the\nmolten metal from environmental contaminants.\nHowever, the equip -\nment is expensive, and it can be challenging to achieve vacuum condi -\ntions [9] .\nA study on the EBW of TC4 titanium alloy sheets was\nconducted by Fan et al [10] .\nThe electron beam pulsed amplitude was\nchanged to improve the surface forming of the weld seam, thereby\nimproving the mechanical properties of the welded joints.\nTIG welding\nis a flexible technique and has a comparatively low cost.\nHowever, as the\nincrement of heat input is generated by TIG welding, the welded joints\ncan become distorted, and the width of HAZ can become wider. More -\nover, the mechanical properties of welded joints are also affected\n[11,12] .\nHe et al.\n[13] measured the residual stress of TIG welded joints\nby the small hole detection method.\nAccording to the findings, the re -\nsidual stress and the weld width increased with increasing heat input.\nCompared with other welding techniques, LBW has the characteristics of\nflexible operation, high energy density and welding efficiency [14,15] .\nEmre E H et al.\n[16] studied the effects of different welding speeds on the\nmechanical properties of a 1.2 mm thick biomedical TC4 titanium alloy\n* Corresponding author.\nE-mail address:\nliangyahong2023@126.com (Y. Liang).\nContents lists available at ScienceDirect\nOptics and Laser Technology\njournal homepag e:\nwww.else vier.com/loc ate/optlaste c\nhttps://doi.org/10.1016/j.optlastec.2023.110320\nReceived 3 August 2023;\nReceived in revised form 25 September 2023;\nAccepted 6 November 2023\nOptics and Laser Technology 170 (2024) 110320\nand reported that the maximum tensile strength was obtained at 250\ncm/min welding speed for laser welded joints.\nChamanfar A et al. [17]\nfound that the ultimate tensile strength of Ti1023 titanium alloy laser\nwelded joints was 84 % of that of the BM.\nThe fracture surfaces of the\ntensile samples indicated a mixed brittle and ductile fracture mode. Guo\net al.\n[18] researched underwater laser welding of a 2 mm thick TC4\ntitanium alloy and found the near-FZ consisted of the α + α ′ phases,\nwhereas the near-BM contained almost no α phases.\nMalikov A G et al.\n[19] analyzed the microstructure of the laser welded joints of titanium\nalloy and aluminum alloy, the analysis showed the presence of brittle\nand gliding fractures.\nMohamad A et al.\n[20] explored the laser welding\nof Ti6Al4V titanium alloy in air and a water medium.\nThey found the\ndistribution of martensite was basket-like in the underwater-welded\njoints, which was different from the air-welded joints.\nIt is infrequent\nto use orthogonal experiments to obtain the optimal welding parameters\nof laser welded joints of titanium alloy.\nIn the present study, the aim was to investigate the microstructure\nand mechanical properties of 3 mm thick TC4 titanium alloy laser\nwelded joints and obtain the optimal welding parameters.\nThe micro -",
+        "relevance_reason": "The chunk mentions a laser welding study by Emre E H et al. that reported a welding speed of 250 cm/min and the resulting maximum tensile strength, which are directly relevant target parameters.",
+        "excerpt": "They found that amorphous brazing could reduce residual stress and improve the mechanical properties of welded joints. EBW is performed under vacuum conditions, which can protect the molten metal from environmental contaminants. However, th..."
+      }
+    },
+    {
+      "record_id": "R003",
+      "association_status": "partial",
+      "source_chunk_ids": [
+        "c-003"
+      ],
+      "merge_note": "unmatched process parameters",
+      "welding_parameters": {
+        "welding_power": null,
+        "welding_speed": null,
+        "defocusing_distance": null,
+        "shielding_gas": "pure argon",
+        "shielding_gas_flow_rate": "obverse 25 L/min, reverse 15 L/min"
+      },
+      "mechanical_performance": {
+        "tensile_strength": null,
+        "yield_strength": null,
+        "elongation_rate": null
+      },
+      "source": {
+        "chunk_id": "c-003",
+        "chunk": "structure, fracture morphology, grain orientation, grain misorientation\nand grain size of laser welded joints for optimal welding parameters\nwere analyzed in detail.\nThe results of this paper could provide a deep\nunderstanding of the laser welding process of TC4 titanium alloy.\n2. Materials and experimental procedures\n2.1. Materials and laser\nAnnealed plates of Ti-6Al-4V titanium alloy were used in this study\nwith a thickness of 3 mm.\nTi-6Al-4V is a typical alpha – beta phase tita -\nnium alloy.\nThe chemical composition of the base metal is given in\nTable 1 .\nFor the welding procedure, titanium alloy plates with dimensions of\n80 mm × 75 mm × 3 mm were made. IPG Photonics, a German com -\npany, produced the IPG YLS-10000 fiber laser with 10 kW laser power\nand 470 mm focal length.\nAs shown in Fig.\n1 , a KUKA-KP-C4 robot, robot\ncontrol system and YLS-10000 fiber laser made up the laser.\nStand-up\naxes were used in conjunction with the KUKA-KP-C4 robot.\n2.2. Pre-weld treatment and welding\nCoarse sandpaper was used to polish the welded surface of plates\nmade of the Ti-6Al-4V titanium alloy before performing welding trials.\nThe specimens were then etched for approximately 120 s using 90 ml\npure water + 5 ml HNO\n+ 5 ml HF to remove surface stains.\nFinally, the\nsurface of the specimens was wiped with dehydrated ethanol and\nallowed to dry.\nThese treated specimens were then welded as soon as\npossible.\nFollowing program selection, the robot control system controlled the\nlaser power, welding speed, and defocused position, while the experi -\nments were conducted under obverse and reverse protection of pure\nargon gas.\nThe flow rates for the obverse and reverse shielding gases\nwere 25 L/min and 15 L/min, respectively.\nThe 3 mm thick Ti-6Al-4V\ntitanium alloy plates were welded in the butt configuration.\nParame -\nters were explored based on the results of previous self-fusion welding\ntrials, the welding parameters used in this study are given in Table 2 .\nThe L9(3\n) orthogonal experimental scheme is given in Table 3 .\n2.3. Tensile tests\nCalculating the dimensions of a 3 mm thick plate following the\ntensile test method on welded joints (GB/T 228.1 – 2021), the tensile\nspecimens with the dimensions presented in Fig.\n2 were used to gather\ninformation on the tensile characteristics of the weldments.\nWire-cutting\nwas performed using electrical discharge machining (EDM) on a set of\nthree tensile specimens.\nAn SHT-4605 type of microcomputer-controlled\nelectronic universal testing machine with a 58 kN capacity and a 1 mm/\nmin elongation rate was used to test all tensile specimens for different\nwelding parameters.\nFollowing tensile tests, a HITACHI S-3400 SEM was\nused to examine the fracture morphology of the specimens.\n2.4. Microstructure investigation\nThe metallographic specimens were polished with grinding discs\nuntil the surface exhibited a mirror-like finish and then electrolytically\npolished using a polishing agent (10 ml perchloric acid + 30 ml n-butyl\nalcohol + 60 ml methyl alcohol).\nNext, the surfaces of metallographic\nspecimens were etched using 90 ml pure water + 6 ml HNO\n+ 4 ml HF.\nThe OM was used to observe the important aspects of the metallurgical",
+        "relevance_reason": "The chunk describes the laser welding experimental setup for Ti-6Al-4V and explicitly provides shielding gas type (pure argon) and flow rates (obverse 25 L/min, reverse 15 L/min), which are target process parameters. It also references tables containing other welding parameters, indicating potential extractable records.",
+        "excerpt": "structure, fracture morphology, grain orientation, grain misorientation and grain size of laser welded joints for optimal welding parameters were analyzed in detail. The results of this paper could provide a deep understanding of the laser ..."
+      }
+    },
+    {
+      "record_id": "R004",
+      "association_status": "paired",
+      "source_chunk_ids": [
+        "c-005"
+      ],
+      "merge_note": null,
+      "welding_parameters": {
+        "welding_power": "2200 W",
+        "welding_speed": "1.8 m/min",
+        "defocusing_distance": "-2 mm",
+        "shielding_gas": null,
+        "shielding_gas_flow_rate": null
+      },
+      "mechanical_performance": {
+        "tensile_strength": "972.1 MPa",
+        "yield_strength": null,
+        "elongation_rate": null
+      },
+      "source": {
+        "chunk_id": "c-005",
+        "chunk": "1 2.2 (A\n) 0.03 (B\n) \u0000 2 (C\n2 2.3 (A\n) 0.04 (B\n) 0 (C\n3 2.4 (A\n) 0.05 (B\n) 2 (C\nTable 3\nThe orthogonal experimental layout scheme.\nLaser power Welding speed Defocused position\n1 A\n2 A\n3 A\n4 A\n5 A\n6 A\n7 A\n8 A\n9 A\nFig. 2.\nDimensions of the tensile specimens (unit: mm).\nTable 4\nThe results of the orthogonal experiment.\nFactor Result\nP (kW)\nv (m/s)\nZ (mm)\nTensile strength\n(MPa)\n1  2.2  0.03 \u0000 2 972.1\n2  2.2  0.04 0 979.6\n3  2.2  0.05 2 889.7\n4  2.3  0.03 0 979\n5  2.3  0.04 2 905\n6  2.3  0.05 \u0000 2 975.9\n7  2.4  0.03 2 884.4\n8  2.4  0.04 \u0000 2 961.5\n9  2.4  0.05 0 977.1\nG.\nLi et al.\nOptics and Laser Technology 170 (2024) 110320\nparameters obtained through the analysis of range and variance were\nlaser power 2.3 kW, welding speed 0.04 m/s, and defocused position 0\nmm.\nMoreover, the optimal welding parameters were used as the\nwelding parameters for sample 10.\n3.2. Microstructure of the laser welded joints\nFig.\n3 shows the microstructure of metallographic specimen 10.\nAccording to the temperature of different regions of the welded joint in\nthe welding process, the welded joint was divided into the BM, HAZ and\nFZ.\nAs shown in Fig.\n3 (a), the HAZ and FZ differed significantly from the\nBM.\nThe microstructure of the BM is displayed in Fig. 3 (b).\nThe dark-\ncolored β phase (body centered cubic) was dispersed in the light-\ncolored α matrix (hexagonal close packed).\nFig.\n3 (c) shows the microstructure of the HAZ.\nA phase transition in\nthe HAZ occurred without melting of the welded joint.\nThe micro -\nstructure was composed of the α phase and β phase at high temperatures.\nDuring the rapid cooling process, with little variation in the α phase and\nβ phase, the crystallographic structure changed from body centered\ncubic to hexagonal close packed [24,25] .\nThe HAZ consisted of a small\namount of α ′ martensite, predominantly α\nand β\nAs the temperature in\nthe HAZ reached the α phase and β phase transformation temperature,\nsome of the α phase and β phase transformed into the high-temperature β\nphase.\nBecause this temperature was not high, the high-temperature β\nphase did not grow, and little of the high-temperature β phase trans -\nformed into the secondary α ′ phase during the post-weld cooling process.\nAs shown in Fig.\n3 (d), compared with the acicular α ′ martensite far from\nthe FZ, the acicular α ′ martensite became coarser and denser close to the\nFZ.\nBecause the closer the FZ was, the higher the temperature, the more\nhigh-temperature β phase formed.\nFurthermore, more martensite was\nformed by transformation during cooling.\nCompared to the FZ, the\nundercooling and the temperature of the HAZ were lower, and thus the\nα ′ martensite domains in the HAZ were fewer and finer.\nThe microstructure of the FZ is given in Fig.\n3 (e), and the FZ was\ncharacterized by epitaxial solidification.\nThe grains in the FZ were based\non semi-melted grains as the nucleation mechanism extended to the",
+        "relevance_reason": "该文本块包含正交实验记录，表中列出了激光功率、焊接速度、离焦量以及抗拉强度等焊接工艺参数和力学性能数据，尽管未提供屈服强度和伸长率，但仍属于任务相关的可提取内容。",
+        "excerpt": "1 2.2 (A ) 0.03 (B ) \u0000 2 (C 2 2.3 (A ) 0.04 (B ) 0 (C 3 2.4 (A ) 0.05 (B ) 2 (C Table 3 The orthogonal experimental layout scheme. Laser power Welding speed Defocused position 1 A 2 A 3 A 4 A 5 A 6 A 7 A 8 A 9 A Fig. 2. Dimensions of the te..."
+      }
+    },
+    {
+      "record_id": "R005",
+      "association_status": "paired",
+      "source_chunk_ids": [
+        "c-005"
+      ],
+      "merge_note": null,
+      "welding_parameters": {
+        "welding_power": "2200 W",
+        "welding_speed": "2.4 m/min",
+        "defocusing_distance": "0 mm",
+        "shielding_gas": null,
+        "shielding_gas_flow_rate": null
+      },
+      "mechanical_performance": {
+        "tensile_strength": "979.6 MPa",
+        "yield_strength": null,
+        "elongation_rate": null
+      },
+      "source": {
+        "chunk_id": "c-005",
+        "chunk": "1 2.2 (A\n) 0.03 (B\n) \u0000 2 (C\n2 2.3 (A\n) 0.04 (B\n) 0 (C\n3 2.4 (A\n) 0.05 (B\n) 2 (C\nTable 3\nThe orthogonal experimental layout scheme.\nLaser power Welding speed Defocused position\n1 A\n2 A\n3 A\n4 A\n5 A\n6 A\n7 A\n8 A\n9 A\nFig. 2.\nDimensions of the tensile specimens (unit: mm).\nTable 4\nThe results of the orthogonal experiment.\nFactor Result\nP (kW)\nv (m/s)\nZ (mm)\nTensile strength\n(MPa)\n1  2.2  0.03 \u0000 2 972.1\n2  2.2  0.04 0 979.6\n3  2.2  0.05 2 889.7\n4  2.3  0.03 0 979\n5  2.3  0.04 2 905\n6  2.3  0.05 \u0000 2 975.9\n7  2.4  0.03 2 884.4\n8  2.4  0.04 \u0000 2 961.5\n9  2.4  0.05 0 977.1\nG.\nLi et al.\nOptics and Laser Technology 170 (2024) 110320\nparameters obtained through the analysis of range and variance were\nlaser power 2.3 kW, welding speed 0.04 m/s, and defocused position 0\nmm.\nMoreover, the optimal welding parameters were used as the\nwelding parameters for sample 10.\n3.2. Microstructure of the laser welded joints\nFig.\n3 shows the microstructure of metallographic specimen 10.\nAccording to the temperature of different regions of the welded joint in\nthe welding process, the welded joint was divided into the BM, HAZ and\nFZ.\nAs shown in Fig.\n3 (a), the HAZ and FZ differed significantly from the\nBM.\nThe microstructure of the BM is displayed in Fig. 3 (b).\nThe dark-\ncolored β phase (body centered cubic) was dispersed in the light-\ncolored α matrix (hexagonal close packed).\nFig.\n3 (c) shows the microstructure of the HAZ.\nA phase transition in\nthe HAZ occurred without melting of the welded joint.\nThe micro -\nstructure was composed of the α phase and β phase at high temperatures.\nDuring the rapid cooling process, with little variation in the α phase and\nβ phase, the crystallographic structure changed from body centered\ncubic to hexagonal close packed [24,25] .\nThe HAZ consisted of a small\namount of α ′ martensite, predominantly α\nand β\nAs the temperature in\nthe HAZ reached the α phase and β phase transformation temperature,\nsome of the α phase and β phase transformed into the high-temperature β\nphase.\nBecause this temperature was not high, the high-temperature β\nphase did not grow, and little of the high-temperature β phase trans -\nformed into the secondary α ′ phase during the post-weld cooling process.\nAs shown in Fig.\n3 (d), compared with the acicular α ′ martensite far from\nthe FZ, the acicular α ′ martensite became coarser and denser close to the\nFZ.\nBecause the closer the FZ was, the higher the temperature, the more\nhigh-temperature β phase formed.\nFurthermore, more martensite was\nformed by transformation during cooling.\nCompared to the FZ, the\nundercooling and the temperature of the HAZ were lower, and thus the\nα ′ martensite domains in the HAZ were fewer and finer.\nThe microstructure of the FZ is given in Fig.\n3 (e), and the FZ was\ncharacterized by epitaxial solidification.\nThe grains in the FZ were based\non semi-melted grains as the nucleation mechanism extended to the",
+        "relevance_reason": "该文本块包含正交实验记录，表中列出了激光功率、焊接速度、离焦量以及抗拉强度等焊接工艺参数和力学性能数据，尽管未提供屈服强度和伸长率，但仍属于任务相关的可提取内容。",
+        "excerpt": "1 2.2 (A ) 0.03 (B ) \u0000 2 (C 2 2.3 (A ) 0.04 (B ) 0 (C 3 2.4 (A ) 0.05 (B ) 2 (C Table 3 The orthogonal experimental layout scheme. Laser power Welding speed Defocused position 1 A 2 A 3 A 4 A 5 A 6 A 7 A 8 A 9 A Fig. 2. Dimensions of the te..."
+      }
+    },
+    {
+      "record_id": "R006",
+      "association_status": "paired",
+      "source_chunk_ids": [
+        "c-005"
+      ],
+      "merge_note": null,
+      "welding_parameters": {
+        "welding_power": "2200 W",
+        "welding_speed": "3.0 m/min",
+        "defocusing_distance": "2 mm",
+        "shielding_gas": null,
+        "shielding_gas_flow_rate": null
+      },
+      "mechanical_performance": {
+        "tensile_strength": "889.7 MPa",
+        "yield_strength": null,
+        "elongation_rate": null
+      },
+      "source": {
+        "chunk_id": "c-005",
+        "chunk": "1 2.2 (A\n) 0.03 (B\n) \u0000 2 (C\n2 2.3 (A\n) 0.04 (B\n) 0 (C\n3 2.4 (A\n) 0.05 (B\n) 2 (C\nTable 3\nThe orthogonal experimental layout scheme.\nLaser power Welding speed Defocused position\n1 A\n2 A\n3 A\n4 A\n5 A\n6 A\n7 A\n8 A\n9 A\nFig. 2.\nDimensions of the tensile specimens (unit: mm).\nTable 4\nThe results of the orthogonal experiment.\nFactor Result\nP (kW)\nv (m/s)\nZ (mm)\nTensile strength\n(MPa)\n1  2.2  0.03 \u0000 2 972.1\n2  2.2  0.04 0 979.6\n3  2.2  0.05 2 889.7\n4  2.3  0.03 0 979\n5  2.3  0.04 2 905\n6  2.3  0.05 \u0000 2 975.9\n7  2.4  0.03 2 884.4\n8  2.4  0.04 \u0000 2 961.5\n9  2.4  0.05 0 977.1\nG.\nLi et al.\nOptics and Laser Technology 170 (2024) 110320\nparameters obtained through the analysis of range and variance were\nlaser power 2.3 kW, welding speed 0.04 m/s, and defocused position 0\nmm.\nMoreover, the optimal welding parameters were used as the\nwelding parameters for sample 10.\n3.2. Microstructure of the laser welded joints\nFig.\n3 shows the microstructure of metallographic specimen 10.\nAccording to the temperature of different regions of the welded joint in\nthe welding process, the welded joint was divided into the BM, HAZ and\nFZ.\nAs shown in Fig.\n3 (a), the HAZ and FZ differed significantly from the\nBM.\nThe microstructure of the BM is displayed in Fig. 3 (b).\nThe dark-\ncolored β phase (body centered cubic) was dispersed in the light-\ncolored α matrix (hexagonal close packed).\nFig.\n3 (c) shows the microstructure of the HAZ.\nA phase transition in\nthe HAZ occurred without melting of the welded joint.\nThe micro -\nstructure was composed of the α phase and β phase at high temperatures.\nDuring the rapid cooling process, with little variation in the α phase and\nβ phase, the crystallographic structure changed from body centered\ncubic to hexagonal close packed [24,25] .\nThe HAZ consisted of a small\namount of α ′ martensite, predominantly α\nand β\nAs the temperature in\nthe HAZ reached the α phase and β phase transformation temperature,\nsome of the α phase and β phase transformed into the high-temperature β\nphase.\nBecause this temperature was not high, the high-temperature β\nphase did not grow, and little of the high-temperature β phase trans -\nformed into the secondary α ′ phase during the post-weld cooling process.\nAs shown in Fig.\n3 (d), compared with the acicular α ′ martensite far from\nthe FZ, the acicular α ′ martensite became coarser and denser close to the\nFZ.\nBecause the closer the FZ was, the higher the temperature, the more\nhigh-temperature β phase formed.\nFurthermore, more martensite was\nformed by transformation during cooling.\nCompared to the FZ, the\nundercooling and the temperature of the HAZ were lower, and thus the\nα ′ martensite domains in the HAZ were fewer and finer.\nThe microstructure of the FZ is given in Fig.\n3 (e), and the FZ was\ncharacterized by epitaxial solidification.\nThe grains in the FZ were based\non semi-melted grains as the nucleation mechanism extended to the",
+        "relevance_reason": "该文本块包含正交实验记录，表中列出了激光功率、焊接速度、离焦量以及抗拉强度等焊接工艺参数和力学性能数据，尽管未提供屈服强度和伸长率，但仍属于任务相关的可提取内容。",
+        "excerpt": "1 2.2 (A ) 0.03 (B ) \u0000 2 (C 2 2.3 (A ) 0.04 (B ) 0 (C 3 2.4 (A ) 0.05 (B ) 2 (C Table 3 The orthogonal experimental layout scheme. Laser power Welding speed Defocused position 1 A 2 A 3 A 4 A 5 A 6 A 7 A 8 A 9 A Fig. 2. Dimensions of the te..."
+      }
+    }
+  ]
+}

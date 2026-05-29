@@ -151,6 +151,8 @@ npm run dev -- --host 127.0.0.1 --port 3000
    - 先 `npm run dev:frontend`  
    - 打开「端口 / Ports」面板，确认 **3000** 已转发到本地  
    - 在本地浏览器访问 Cursor 提示的地址（多为 `http://127.0.0.1:3000`）
+   - 若显示的是随机端口（如 `57426`），表示本地 `3000` 未成功绑定（常见原因是本地 `3000` 被占用）
+   - 可在本地执行 `ss -tln | grep ':3000 '`（Windows 用 `netstat -ano | findstr :3000`）先释放占用，再将本地端口改回 `3000`
 
 2. **局域网 IP**（与服务器同一网段）  
    - 看启动日志里的 `Network: http://172.x.x.x:3000/`  
@@ -161,6 +163,8 @@ npm run dev -- --host 127.0.0.1 --port 3000
    ssh -L 3000:127.0.0.1:3000 用户名@服务器IP
    ```  
    然后本地浏览器打开 http://127.0.0.1:3000
+
+补充：仓库已提供工作区端口策略（`.vscode/settings.json`），会优先要求远端 `3000/8000` 转发到本地同号端口。若本地端口冲突，IDE 仍可能回退为随机端口。
 
 ---
 
@@ -184,12 +188,22 @@ npm run dev -- --host 127.0.0.1 --port 3000
 
 ```bash
 cd /path/to/code
+cp .env.docker.example .env   # 可选：固定/调整宿主机端口
 docker compose up -d --build
 ```
 
 访问：
 - 前端：`http://<host>:3000`
 - 后端健康检查：`http://<host>:8000/api/health`
+
+默认 Docker 端口映射：
+- `FRONTEND_PORT=3000`（容器 80）
+- `BACKEND_PORT=8000`（容器 8000）
+
+若宿主机端口冲突，可在 `.env` 调整为其他端口（如 `3001/8001`）。
+若需限制仅本机访问，可设置：
+- `FRONTEND_BIND_HOST=127.0.0.1`
+- `BACKEND_BIND_HOST=127.0.0.1`
 
 ### GPU 可选部署（NVIDIA）
 

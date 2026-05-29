@@ -1,0 +1,16 @@
+{
+  "remote.autoForwardPorts": true,
+  "remote.restoreForwardedPorts": true,
+  "remote.portsAttributes": {
+    "3000": {
+      "label": "sdweb-frontend",
+      "onAutoForward": "notify",
+      "requireLocalPort": true
+    },
+    "8000": {
+      "label": "sdweb-backend",
+      "onAutoForward": "silent",
+      "requireLocalPort": true
+    }
+  }
+}
