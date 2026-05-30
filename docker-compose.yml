@@ -12,6 +12,7 @@ services:
       DEFAULT_USERNAME: ${DEFAULT_USERNAME:-root}
       DEFAULT_PASSWORD: ${DEFAULT_PASSWORD:-123456}
       EMBEDDING_CACHE_DIR: /data/lz/modelscope/embedding
+      MODEL_API_SECRET_FILE: /data/lz/secrets/model_api_keys.json
     ports:
       - "${BACKEND_BIND_HOST:-0.0.0.0}:${BACKEND_PORT:-8000}:8000"
     volumes:

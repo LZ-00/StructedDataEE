@@ -20,6 +20,7 @@ backend/__pycache__/
 **/__pycache__/
 *.py[cod]
 .pytest_cache/
+backend/app/data/models_registry.secrets.json
 
 # Editor directories and files
 .vscode/*

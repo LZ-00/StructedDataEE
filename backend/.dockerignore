@@ -6,4 +6,5 @@ tests/.pytest_cache
 app/data/distillation/generated
 app/data/distillation/uploads
 app/data/distillation/finetune
+app/data/models_registry.secrets.json
 *.log

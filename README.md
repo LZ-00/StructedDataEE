@@ -27,11 +27,12 @@ npm run dev:backend
 npm run dev:frontend
 ```
 
-浏览器访问 http://localhost:3000 ，默认账号：**root** / **123456**。
+浏览器访问 [http://localhost:3000](http://localhost:3000) ，默认账号：**root** / **123456**。
 
 ## Docker 部署（离线可用）
 
 项目已提供 Docker Compose 双服务部署：
+
 - `frontend`：Nginx 托管前端静态资源，并反向代理 `/api` 到后端。
 - `backend`：FastAPI 服务，镜像构建阶段预打包 `BAAI/bge-m3` 权重，离线运行可直接使用语义分块能力。
 
@@ -45,6 +46,7 @@ docker compose up -d --build
 ```
 
 访问地址：
+
 - 前端：`http://<host>:3000`
 - 后端健康检查：`http://<host>:8000/api/health`
 
@@ -56,6 +58,7 @@ BACKEND_PORT=8001
 ```
 
 也可通过 `FRONTEND_BIND_HOST` / `BACKEND_BIND_HOST` 控制监听地址：
+
 - `0.0.0.0`：允许局域网访问
 - `127.0.0.1`：仅本机访问
 
@@ -87,14 +90,16 @@ docker compose up -d
 
 ## API 概览
 
-| 模块 | 路径前缀 | 说明 |
-|------|----------|------|
-| 认证 | `POST /api/auth/login` | JWT 登录 |
-| 抽取 | `POST /api/extraction/extract`、`/extract-text` | 结构化抽取 |
-| 评估 | `POST /api/evaluation/evaluate` | 质量评估 + CoT 日志 |
-| 蒸馏 | `POST /api/distillation/generate-dataset` | 思维链蒸馏数据构建 |
-| 微调 | `POST /api/finetune/run`、`/publish` | LoRA 微调与发布 |
-| 配置 | `GET /api/extraction/options`、`/evaluation/options`、`/distillation/options`、`/finetune/options` | 各页面下拉与默认值 |
+
+| 模块  | 路径前缀                                                                                            | 说明            |
+| --- | ----------------------------------------------------------------------------------------------- | ------------- |
+| 认证  | `POST /api/auth/login`                                                                          | JWT 登录        |
+| 抽取  | `POST /api/extraction/extract`、`/extract-text`                                                  | 结构化抽取         |
+| 评估  | `POST /api/evaluation/evaluate`                                                                 | 质量评估 + CoT 日志 |
+| 蒸馏  | `POST /api/distillation/generate-dataset`                                                       | 思维链蒸馏数据构建     |
+| 微调  | `POST /api/finetune/run`、`/publish`                                                             | LoRA 微调与发布    |
+| 配置  | `GET /api/extraction/options`、`/evaluation/options`、`/distillation/options`、`/finetune/options` | 各页面下拉与默认值     |
+
 
 业务实现位于 `backend/app/services/`，可按需替换为真实模型与数据库。
 
@@ -107,3 +112,4 @@ SECRET_KEY=your-production-secret
 DEFAULT_USERNAME=root
 DEFAULT_PASSWORD=123456
 ```
+

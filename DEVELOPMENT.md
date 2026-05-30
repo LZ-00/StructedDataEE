@@ -255,6 +255,8 @@ docker compose down -v
 SECRET_KEY=your-production-secret
 DEFAULT_USERNAME=root
 DEFAULT_PASSWORD=123456
+# 可选：指定 API 密钥安全文件路径（避免写入仓库）
+# MODEL_API_SECRET_FILE=/data/lz/secrets/model_api_keys.json
 ```
 
 ---

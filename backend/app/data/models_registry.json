@@ -24,7 +24,6 @@
     "updated_at": "2026-05-16T19:59:35.920837+08:00",
     "api_config": {
       "base_url": "https://api.deepseek.com",
-      "api_key": "sk-8981506495ff4f55ae68a6d764f03a25",
       "model_id": "deepseek-v4-flash",
       "temperature": 0.7,
       "max_tokens": 4096
@@ -38,10 +37,9 @@
     "enabled": true,
     "description": "",
     "created_at": "2026-05-16T20:32:54.353813+08:00",
-    "updated_at": "2026-05-16T20:32:54.353841+08:00",
+    "updated_at": "2026-05-30T12:41:10.251342+08:00",
     "api_config": {
       "base_url": "https://api.deepseek.com",
-      "api_key": "sk-8981506495ff4f55ae68a6d764f03a25",
       "model_id": "deepseek-v4-pro",
       "temperature": 0.7,
       "max_tokens": 4096

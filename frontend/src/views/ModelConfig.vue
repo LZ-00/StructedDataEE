@@ -425,6 +425,13 @@ async function handleSubmit() {
   if (!valid) return
 
   saving.value = true
+  const checkingApiMsg = form.type === 'api'
+    ? ElMessage({
+        type: 'info',
+        message: '正在测试模型 API Key 是否可用，请稍候…',
+        duration: 0
+      })
+    : null
   try {
     if (isEdit.value) {
       await modelConfigService.updateModel(editingId.value, buildPayload())
@@ -438,6 +445,7 @@ async function handleSubmit() {
   } catch (e: unknown) {
     ElMessage.error(formatApiError(e, '保存失败'))
   } finally {
+    checkingApiMsg?.close()
     saving.value = false
   }
 }

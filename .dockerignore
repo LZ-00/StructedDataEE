@@ -13,6 +13,7 @@ backend/tests/.pytest_cache
 backend/app/data/distillation/generated
 backend/app/data/distillation/uploads
 backend/app/data/distillation/finetune
+backend/app/data/models_registry.secrets.json
 *.log
 *.tmp
 *.swp

@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import copy
 import json
+import os
 import uuid
 from pathlib import Path
 from typing import Any, Literal, Optional
@@ -13,6 +15,8 @@ from app.timezone_utils import iso_now_asia_shanghai
 
 _REGISTRY_PATH = Path(__file__).resolve().parent.parent / "data" / "models_registry.json"
 _DEFAULT_BASE_DIR = catalog.DEFAULT_LOCAL_BASE_DIR
+_DEFAULT_SECRET_PATH = Path(__file__).resolve().parent.parent / "data" / "models_registry.secrets.json"
+_SECRET_PATH = Path(os.getenv("MODEL_API_SECRET_FILE", "")).expanduser() if os.getenv("MODEL_API_SECRET_FILE") else _DEFAULT_SECRET_PATH
 
 ModelType = Literal["api", "local"]
 ModelUsage = catalog.ModelUsage
@@ -30,6 +34,71 @@ def _mask_secret(value: str) -> str:
     if len(value) <= 8:
         return "*" * len(value)
     return value[:4] + "****" + value[-4:]
+
+
+def _load_secret_map() -> dict[str, str]:
+    if _SECRET_PATH.is_file():
+        try:
+            with open(_SECRET_PATH, encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, dict):
+                return {str(k): str(v) for k, v in data.items() if str(v).strip()}
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+def _save_secret_map(secret_map: dict[str, str]) -> None:
+    _SECRET_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(_SECRET_PATH, "w", encoding="utf-8") as f:
+        json.dump(secret_map, f, ensure_ascii=False, indent=2)
+    try:
+        os.chmod(_SECRET_PATH, 0o600)
+    except OSError:
+        pass
+
+
+def _set_model_secret(model_id: str, api_key: str) -> None:
+    key = (api_key or "").strip()
+    if not model_id or not key:
+        return
+    secret_map = _load_secret_map()
+    secret_map[model_id] = key
+    _save_secret_map(secret_map)
+
+
+def _delete_model_secret(model_id: str) -> None:
+    if not model_id:
+        return
+    secret_map = _load_secret_map()
+    if model_id in secret_map:
+        secret_map.pop(model_id, None)
+        _save_secret_map(secret_map)
+
+
+def _resolve_model_secret(model_id: str, api_cfg: dict[str, Any]) -> str:
+    direct = (api_cfg.get("api_key") or "").strip()
+    if direct:
+        return direct
+    secret_map = _load_secret_map()
+    by_id = (secret_map.get(model_id) or "").strip()
+    if by_id:
+        return by_id
+    env_key_name = (api_cfg.get("api_key_env") or api_cfg.get("apiKeyEnv") or "").strip()
+    if env_key_name:
+        env_val = (os.getenv(env_key_name) or "").strip()
+        if env_val:
+            return env_val
+    return (os.getenv("OPENAI_API_KEY") or "").strip()
+
+
+def _sanitize_item_for_disk(item: dict[str, Any]) -> dict[str, Any]:
+    out = copy.deepcopy(item)
+    api = out.get("api_config")
+    if isinstance(api, dict):
+        api.pop("api_key", None)
+        out["api_config"] = api
+    return out
 
 
 def resolve_local_path(model_id: str, base_dir: str, custom_path: str = "") -> str:
@@ -59,6 +128,18 @@ def _load_registry() -> None:
             with open(_REGISTRY_PATH, encoding="utf-8") as f:
                 data = json.load(f)
             _registry = data if isinstance(data, list) else []
+            migrated = False
+            for item in _registry:
+                api = item.get("api_config")
+                if not isinstance(api, dict):
+                    continue
+                raw_key = (api.get("api_key") or "").strip()
+                if raw_key:
+                    _set_model_secret(str(item.get("id", "")), raw_key)
+                    api.pop("api_key", None)
+                    migrated = True
+            if migrated:
+                _save_registry()
             return
         except (json.JSONDecodeError, OSError):
             pass
@@ -68,16 +149,26 @@ def _load_registry() -> None:
 
 def _save_registry() -> None:
     _REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    disk_items = [_sanitize_item_for_disk(item) for item in _registry]
     with open(_REGISTRY_PATH, "w", encoding="utf-8") as f:
-        json.dump(_registry, f, ensure_ascii=False, indent=2)
+        json.dump(disk_items, f, ensure_ascii=False, indent=2)
+
+
+def _runtime_item(item: dict[str, Any]) -> dict[str, Any]:
+    out = copy.deepcopy(item)
+    api = out.get("api_config")
+    if isinstance(api, dict):
+        api["api_key"] = _resolve_model_secret(str(out.get("id", "")), api)
+        out["api_config"] = api
+    return out
 
 
 def _public_item(item: dict[str, Any]) -> dict[str, Any]:
-    out = dict(item)
+    out = copy.deepcopy(item)
     api = out.get("api_config")
-    if isinstance(api, dict) and api.get("api_key"):
+    if isinstance(api, dict):
         api = dict(api)
-        api["api_key_masked"] = _mask_secret(api["api_key"])
+        api["api_key_masked"] = _mask_secret(_resolve_model_secret(str(out.get("id", "")), api))
         api["api_key"] = ""
         out["api_config"] = api
     if out.get("type") == "local":
@@ -115,7 +206,7 @@ def get_model_internal(model_id: str) -> Optional[dict[str, Any]]:
     _load_registry()
     for m in _registry:
         if m.get("id") == model_id:
-            return m
+            return _runtime_item(m)
     return None
 
 
@@ -199,9 +290,12 @@ def _validate_model_item(item: dict[str, Any]) -> None:
 
     if model_type == "api":
         api = item.get("api_config") or {}
+        api_key = _resolve_model_secret(str(item.get("id", "")), api)
+        if not api_key:
+            raise ValueError("API Key 未配置，请在模型配置中填写，或通过环境变量提供")
         model_test_service.validate_api_model_accessible(
             model_id=api.get("model_id", ""),
-            api_key=api.get("api_key", ""),
+            api_key=api_key,
             base_url=api.get("base_url", ""),
             temperature=float(api.get("temperature", 0.7)),
             max_tokens=int(api.get("max_tokens") or catalog.MODEL_TEST_API_MAX_TOKENS),
@@ -249,13 +343,16 @@ def create_model(payload: dict[str, Any]) -> dict[str, Any]:
         model_id = (api.get("model_id") or api.get("modelId") or "").strip()
         if not model_id:
             raise ValueError("API 模型标识（model_id）不能为空")
+        raw_api_key = (api.get("api_key") or api.get("apiKey") or "").strip()
         item["api_config"] = {
             "base_url": (api.get("base_url") or api.get("baseUrl") or "").strip(),
-            "api_key": (api.get("api_key") or api.get("apiKey") or "").strip(),
+            "api_key_env": (api.get("api_key_env") or api.get("apiKeyEnv") or "").strip(),
             "model_id": model_id,
             "temperature": float(api.get("temperature", 0.7)),
             "max_tokens": int(api.get("max_tokens") or api.get("maxTokens") or 4096),
         }
+        if raw_api_key:
+            _set_model_secret(item["id"], raw_api_key)
         item["local_config"] = None
     else:
         local = payload.get("local_config") or {}
@@ -303,7 +400,9 @@ def update_model(model_id: str, payload: dict[str, Any]) -> dict[str, Any]:
             cfg["model_id"] = (api.get("model_id") or api.get("modelId") or "").strip()
         key_val = api.get("api_key") or api.get("apiKey")
         if key_val and str(key_val).strip():
-            cfg["api_key"] = str(key_val).strip()
+            _set_model_secret(model_id, str(key_val).strip())
+        if "api_key_env" in api or "apiKeyEnv" in api:
+            cfg["api_key_env"] = (api.get("api_key_env") or api.get("apiKeyEnv") or "").strip()
         if "temperature" in api:
             cfg["temperature"] = float(api["temperature"])
         max_tok = api.get("max_tokens") if "max_tokens" in api else api.get("maxTokens")
@@ -343,6 +442,7 @@ def delete_model(model_id: str) -> None:
     if len(_registry) == before:
         raise ValueError("模型不存在")
     _save_registry()
+    _delete_model_secret(model_id)
 
 
 def test_model_connection(model_id: str) -> dict[str, Any]:
